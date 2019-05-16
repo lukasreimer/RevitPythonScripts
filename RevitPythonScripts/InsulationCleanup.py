@@ -15,8 +15,8 @@ view = doc.ActiveView
 
 # TODO: ask user to specify which kind
 # Setup:
-category = BuiltInCategory.OST_PipeInsulations  # alternatively:
-# category = BuiltInCategory.OST_DuctInsulations
+category = db.BuiltInCategory.OST_PipeInsulations  # alternatively:
+# category = db.BuiltInCategory.OST_DuctInsulations
 
 # Inspect
 # select all pipe/duct insulation elements
@@ -73,7 +73,7 @@ try:
         print("{elem_id}, {host_id}".format(elem_id=element_workset_id, host_id=host_workset_id))
 
         # get the host workset parameter for setting its value
-        host_workset_parameter = pair.host.get_Parameter(BuiltInParameter.ELEM_PARTITION_PARAM)
+        host_workset_parameter = pair.host.get_Parameter(db.BuiltInParameter.ELEM_PARTITION_PARAM)
         # move host to insulation WorksetId
         host_workset_parameter.Set(element_workset_id)
         # move host to previous host workset (and carry over the insulation)
