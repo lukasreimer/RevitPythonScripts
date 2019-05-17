@@ -16,7 +16,11 @@ This is a list of possible scripts that could be researched or implemented.
 ## Visualization
 
 - Color Elements based on some rule (velocity, pressure, etc.)
+- Create Color Schemes
 
+## Schedules
+
+- Create Schedules for quantification/costing
 
 ## Piping
 
