@@ -60,7 +60,7 @@ for element in insulation_elements:
 
 # Change
 transaction = db.Transaction(doc)
-transaction.Start("Insulation Cleanup")
+transaction.Start("InsulationCleanup.py")
 try:
     # Delete all unhosted elements
     for element in unhosted_elements:
