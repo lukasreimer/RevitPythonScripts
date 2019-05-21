@@ -86,3 +86,6 @@ except Exception as ex:
 else:
     ui.TaskDialog.Show("Done", "Deleted {num_unhosted} unhosted insulation elements.\nMoved {num_rogue} rogue insulation elements".format(num_unhosted=len(unhosted_elements), num_rogue=len(rogue_elements)))
     transaction.Commit()
+
+#__window__.Hide()
+__window__.Close()
