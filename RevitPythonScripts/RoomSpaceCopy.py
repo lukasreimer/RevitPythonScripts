@@ -1,7 +1,7 @@
 import clr
 clr.AddReference('RevitAPI')
 clr.AddReference('RevitAPIUI')
-from Autodesk.Revit.DB import *
+import Autodesk.Revit.DB as db
 
 #important vars, revit python shell version
 app = __revit__.Application
