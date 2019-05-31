@@ -11,7 +11,7 @@ This is a list of possible scripts that could be researched or implemented.
 ## Insulation
 
 - Manage rogue insulation ✓
-- Add insulation based on EnEV/manufacturer rules
+- Add Ensulation based on EnEV/manufacturer rules
 
 ## Visualization
 
@@ -24,8 +24,15 @@ This is a list of possible scripts that could be researched or implemented.
 
 ## Piping
 
+- Automatic Pipe Sizing
+
 ## Ducting
 
+- Automatic Duct Sizing
+
 ## Tagging
+
+- Automatic Tagging / Tag Placement
+- Tag Alignment
 
 ## ...
