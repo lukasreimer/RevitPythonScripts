@@ -1,14 +1,22 @@
+"""Create Spaces from linked Rooms."""
+
+import time
 import clr
 clr.AddReference('RevitAPI')
 clr.AddReference('RevitAPIUI')
 import Autodesk.Revit.DB as db
 
 
-def main(app, doc, uidoc, view):
-    """Main Function."""
-    
+def main():
+    """Main Script."""
+
+    #important vars, revit python shell version
+    app = __revit__.Application
+    doc = __revit__.ActiveUIDocument.Document
+    uidoc = __revit__.ActiveUIDocument
+    view = doc.ActiveView
+
     print("Running RoomSpaceCopy script for copying linked Rooms to Spaces...")
-    print("")
 
     # Get all links in the revit model
     linked_docs = []
@@ -21,12 +29,10 @@ def main(app, doc, uidoc, view):
     for item in linked_docs:
         print(item)
         print("{0}: {1}".format(item.Title, item.PathName))
-    print("")
 
     # Select the link to copy rooms from
     link = linked_docs[0]
     print("Selected Link: {}".format(link.Title))
-    print("")
 
     # Get all Rooms from the selected link
     rooms = db.FilteredElementCollector(link)\
@@ -37,7 +43,6 @@ def main(app, doc, uidoc, view):
     for room in rooms:
         print(room)
     print("Total = {0} rooms".format(len(rooms)))
-    print("")
 
     # Get linked Levels:
     linked_levels = db.FilteredElementCollector(link)\
@@ -49,8 +54,6 @@ def main(app, doc, uidoc, view):
     for level in linked_levels:
         print(level, level.Name, level.Elevation)
     print("Total = {0} linked levels".format(len(linked_levels)))
-    print("")
-
 
     # Get Levels:
     levels = db.FilteredElementCollector(doc)\
@@ -62,10 +65,8 @@ def main(app, doc, uidoc, view):
     for level in levels:
         print(level, level.Name, level.Elevation, level.IsMonitoringLinkElement())
     print("Total = {0} levels".format(len(levels)))
-    print("")
 
     # TODO: Create Mapping of Levels and Linked Levels by minimal distance
-
     transaction = db.Transaction(doc)
     transaction.Start("RoomSpaceCopy.py")
     try:
@@ -91,13 +92,10 @@ def main(app, doc, uidoc, view):
 
 
 if __name__ == "__main__":
-    #important vars, revit python shell version
-    app = __revit__.Application
-    doc = __revit__.ActiveUIDocument.Document
-    uidoc = __revit__.ActiveUIDocument
-    view = doc.ActiveView
-
-    main(app, doc, uidoc, view)
+     start = time.clock()
+    main()
+    runtime = time.clock() - start
+    print("Runtime = {0} seconds".format(runtime))
 
     #revit python shell has a console, access it like so
     #__window__.Hide()
