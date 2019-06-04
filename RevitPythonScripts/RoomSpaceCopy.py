@@ -81,11 +81,14 @@ def main():
                 insert_point = db.UV(location_point.X, location_point.Y)
                 created_space = doc.Create.NewSpace(space_level, insert_point)
                 created_spaces.append(created_space)
+                # Save unique ID of source room in space parameter "Comments"
+                comment_param = created_space.get_Parameter(
+                    db.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+                comment_param.Set(room.UniqueId)
         print("Created {0} spaces.".format(len(created_spaces)))
-        # Transfer data from the linked rooms to the Spaces
 
     except Exception as ex:
-        print(ex)
+        print("Exception: {0}".format(ex))
         transaction.RollBack()
     else:
         transaction.Commit()
