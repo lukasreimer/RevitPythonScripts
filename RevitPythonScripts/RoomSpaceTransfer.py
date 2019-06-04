@@ -16,7 +16,15 @@ def main():
     uidoc = __revit__.ActiveUIDocument
     view = doc.ActiveView
 
+    print("Transferring Parameter Data from Rooms to Spaces...")
+
+    # TODO: select all spaces in the model
+
+    # TODO: select linked rooms for the spaces
+
+    # TODO: transfer parameter data from rooms to spaces
     
+
 
 if __name__ == "__main__":
     start = time.clock()
