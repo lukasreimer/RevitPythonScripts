@@ -17,6 +17,15 @@ def main(app, doc, uidoc, view):
     """Function Docstring.
 
     This is a description of the main function containing the business logic.
+
+    Args:
+        app (Application): Running application.
+        doc (Document): Open document.
+        uidoc (ActiveUIDocument): Active UI document.
+        view (ActiveView): Currently active view.
+
+    Returns:
+        None: implicityly.
     """
     print("Hello World!")
 
