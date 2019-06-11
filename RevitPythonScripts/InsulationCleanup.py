@@ -22,7 +22,8 @@ def main():
 
     # Main Script
     print("Running InsulationCleanup.py script...")
-    # Inspect
+
+    # STEP 1: Inspect Model
     pipe_insulation_elements = query_all_elements(
         document=doc, category=pipe_insulation_category)
     duct_insulation_elements = query_all_elements(
@@ -47,6 +48,7 @@ def main():
     print_summary(rogue_duct, "Rogue Duct Insulation Summary:")
     #print_all(rogue_duct, indent=2)
 
+    # STEP 2: Receive User Input
     print("[0] - Write Report")
     print("[1] - Cleanup Pipe Insulation")
     print("[2] - Cleanup Duct Insulation")
@@ -69,7 +71,7 @@ def main():
     else:
         print("Nothing to do...")
 
-    # Change
+    # STEP 3: Clean Up Insulation
     transaction = db.Transaction(doc)
     transaction.Start("InsulationCleanup.py")
     try:
@@ -165,7 +167,8 @@ def write_report(file_path, unhosted_pipe, rogue_pipe, unhosted_duct, rogue_duct
     print("writing report at {}".format(file_path))
     with open(file_path, mode="w") as file:
         file.write("Hello World!\n")
-        # TODO: implement
+        # TODO: implement output time stamp
+        # TODO: implement report creation
 
 
 if __name__ == "__main__":
