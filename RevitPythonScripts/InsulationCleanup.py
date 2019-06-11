@@ -49,10 +49,7 @@ def main():
     #print_all(rogue_duct, indent=2)
 
     # STEP 2: Receive User Input
-    print("[0] - Write Report")
-    print("[1] - Cleanup Pipe Insulation")
-    print("[2] - Cleanup Duct Insulation")
-    print("[3] - Cleanup Both Pipe and Duct Insulation")
+    print("[0] Report, [1] Clean Pipe, [2] Clean Duct, [3] Clean Both")
     answer = raw_input("?> ").strip()
     if answer == "0":
         full_path = os.path.join(os.getcwd(), report_file_name)
