@@ -62,6 +62,7 @@ def main():
     #     print("{id}: {name}".format(id=workset.Id.IntegerValue, name=workset.Name))
 
     # Change
+    print("Cleaning Up Insulation...")
     transaction = db.Transaction(doc)
     transaction.Start("InsulationCleanup.py")
     try:
@@ -76,10 +77,18 @@ def main():
         ui.TaskDialog.Show("Failed", "Exception:\n{}".format(ex))
         transaction.RollBack()
     else:
+        text = """\
+Deleted {num_unhosted_pipe} unhosted pipe insulation elements.
+Moved {num_rogue_pipe} rogue pipe insulation elements.
+---
+Deleted {num_unhosted_duct} unhosted pipe insulation elements.
+Moved {num_rogue_duct} rogue pipe insulation elements."""
         ui.TaskDialog.Show(
-            "Done",
-            "Deleted {num_unhosted} unhosted insulation elements.\nMoved {num_rogue} rogue insulation elements".format(
-                num_unhosted=len(unhosted_elements), num_rogue=len(rogue_elements)
+            "Done", text.format(
+                num_unhosted_pipe=len(unhosted_pipe),
+                num_rogue_pipe=len(rogue_pipe),
+                num_unhosted_duct=len(unhosted_duct),
+                num_rogue_duct=len(rogue_duct),
             ),
         )
         transaction.Commit()
