@@ -4,10 +4,9 @@ import time
 import clr
 
 clr.AddReference("RevitAPI")
-# clr.AddReference("RevitAPIUI")
 import Autodesk.Revit.DB as db
-# import Autodesk.Revit.UI as ui
 import collections
+import os
 
 
 def main():
@@ -15,9 +14,11 @@ def main():
 
     # Setup
     doc = __revit__.ActiveUIDocument.Document
-
     pipe_insulation_category = db.BuiltInCategory.OST_PipeInsulations
     duct_insulation_category = db.BuiltInCategory.OST_DuctInsulations
+    clean_pipes = False
+    clean_ducts = False
+    report_file_name = "InsulationCleanup.txt"
 
     # Main Script
     print("Running InsulationCleanup.py script...")
@@ -46,42 +47,57 @@ def main():
     print_summary(rogue_duct, "Rogue Duct Insulation Summary:")
     #print_all(rogue_duct, indent=2)
 
+    print("[0] - Write Report")
     print("[1] - Cleanup Pipe Insulation")
     print("[2] - Cleanup Duct Insulation")
     print("[3] - Cleanup Both Pipe and Duct Insulation")
-    print("[4] - Write Report")
-    answer = input("Continue?")
-    print("You said: '{}'".format(answer))
+    answer = raw_input("?> ").strip()
+    if answer == "0":
+        full_path = os.path.join(os.getcwd(), report_file_name)
+        write_report(file_path=full_path,
+                     unhosted_pipe=unhosted_pipe,
+                     rogue_pipe=rogue_pipe,
+                     unhosted_duct=unhosted_duct,
+                     rogue_duct=rogue_duct)
+    elif answer == "1":
+        clean_pipes = True
+    elif answer == "2":
+        clean_ducts = True
+    elif answer == "3":
+        clean_pipes = True
+        clean_ducts = True
+    else:
+        print("Nothing to do...")
 
     # Change
-    print("Cleaning Up Insulation...")
     transaction = db.Transaction(doc)
     transaction.Start("InsulationCleanup.py")
     try:
-        # PIPE
-        # Delete all unhosted pipe insulation elements
-        for pipe_element in unhosted_pipe:
-            doc.Delete(pipe_element.Id)
-        # Move all rogue pipe insulation elements to correct workset
-        for pipe_pair in rogue_pipe:
-            cleanup_insulation(pipe_pair)
-        # DUCT
-        # Delete all unhosted pipe insulation elements
-        for duct_element in unhosted_duct:
-            doc.Delete(duct_element.Id)
-        # Move all rogue pipe insulation elements to correct workset
-        for duct_pair in rogue_duct:
-            cleanup_insulation(duct_pair)
+        if clean_pipes:
+            print("Cleaning Pipe Insulation...")
+            for pipe_element in unhosted_pipe:
+                doc.Delete(pipe_element.Id)
+            for pipe_pair in rogue_pipe:
+                cleanup_insulation(pipe_pair)
+            print("Deleted {num} unhosted pipe insulation elements".format(
+                num=len(unhosted_pipe)))
+            print("Moved {num} rogue pipe insulation elements.".format(
+                num=len(rogue_pipe)))
+        if clean_ducts:
+            print("Cleaning Duct Insulation...")
+            for duct_element in unhosted_duct:
+                doc.Delete(duct_element.Id)
+            for duct_pair in rogue_duct:
+                cleanup_insulation(duct_pair)
+            print("Deleted {num} unhosted duct insulation elements.".format(
+                num=len(unhosted_duct)))
+            print("Moved {num} rogue duct insulation elements.".format(
+                num=len(rogue_duct)))
     except Exception as exception:
-        # ui.TaskDialog.Show("Failed", "Exception:\n{}".format(ex))
         print("Failed.\nException:\n{ex}".format(ex=exception))
         transaction.RollBack()
     else:
         print("Done.")
-        print("Deleted {num} unhosted pipe insulation elements".format(num=len(unhosted_pipe)))
-        print("Moved {num} rogue pipe insulation elements.".format(num=len(rogue_pipe)))
-        print("Deleted {num} unhosted duct insulation elements.".format(num=len(unhosted_duct)))
-        print("Moved {num} rogue duct insulation elements.".format(num=len(rogue_duct)))
         transaction.Commit()
 
 
@@ -144,6 +160,13 @@ def print_all(element_list, caption=None, indent=0):
             total=total,
             element=element))
 
+def write_report(file_path, unhosted_pipe, rogue_pipe, unhosted_duct, rogue_duct):
+    """Write report of unhosted and rogue insulation elements to a file."""
+    print("writing report at {}".format(file_path))
+    with open(file_path, mode="w") as file:
+        file.write("Hello World!\n")
+        # TODO: implement
+
 
 if __name__ == "__main__":
     start = time.clock()
@@ -151,5 +174,6 @@ if __name__ == "__main__":
     runtime = time.clock() - start
     print("Runtime = {0} seconds".format(runtime))
     # revit python shell console management
-    # __window__.Hide()
-    # __window__.Close()
+    raw_input("Hit any key to close.")
+    __window__.Hide()
+    __window__.Close()
