@@ -4,9 +4,9 @@ import time
 import clr
 
 clr.AddReference("RevitAPI")
-clr.AddReference("RevitAPIUI")
+# clr.AddReference("RevitAPIUI")
 import Autodesk.Revit.DB as db
-import Autodesk.Revit.UI as ui
+# import Autodesk.Revit.UI as ui
 import collections
 
 
@@ -15,6 +15,7 @@ def main():
 
     # Setup
     doc = __revit__.ActiveUIDocument.Document
+
     pipe_insulation_category = db.BuiltInCategory.OST_PipeInsulations
     duct_insulation_category = db.BuiltInCategory.OST_DuctInsulations
 
@@ -45,6 +46,13 @@ def main():
     print_summary(rogue_duct, "Rogue Duct Insulation Summary:")
     #print_all(rogue_duct, indent=2)
 
+    print("[1] - Cleanup Pipe Insulation")
+    print("[2] - Cleanup Duct Insulation")
+    print("[3] - Cleanup Both Pipe and Duct Insulation")
+    print("[4] - Write Report")
+    answer = input("Continue?")
+    print("You said: '{}'".format(answer))
+
     # Change
     print("Cleaning Up Insulation...")
     transaction = db.Transaction(doc)
@@ -64,22 +72,16 @@ def main():
         # Move all rogue pipe insulation elements to correct workset
         for duct_pair in rogue_duct:
             cleanup_insulation(duct_pair)
-    except Exception as ex:
-        ui.TaskDialog.Show("Failed", "Exception:\n{}".format(ex))
+    except Exception as exception:
+        # ui.TaskDialog.Show("Failed", "Exception:\n{}".format(ex))
+        print("Failed.\nException:\n{ex}".format(ex=exception))
         transaction.RollBack()
     else:
-        text = """Pipe:
-Deleted {num_unhosted_pipe} unhosted pipe insulation elements.
-Moved {num_rogue_pipe} rogue pipe insulation elements.
-
-Duct:
-Deleted {num_unhosted_duct} unhosted duct insulation elements.
-Moved {num_rogue_duct} rogue duct insulation elements."""
-        ui.TaskDialog.Show("Done", text.format(
-            num_unhosted_pipe=len(unhosted_pipe),
-            num_rogue_pipe=len(rogue_pipe),
-            num_unhosted_duct=len(unhosted_duct),
-            num_rogue_duct=len(rogue_duct)))
+        print("Done.")
+        print("Deleted {num} unhosted pipe insulation elements".format(num=len(unhosted_pipe)))
+        print("Moved {num} rogue pipe insulation elements.".format(num=len(rogue_pipe)))
+        print("Deleted {num} unhosted duct insulation elements.".format(num=len(unhosted_duct)))
+        print("Moved {num} rogue duct insulation elements.".format(num=len(rogue_duct)))
         transaction.Commit()
 
 
