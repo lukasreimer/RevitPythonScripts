@@ -9,6 +9,7 @@ import clr
 clr.AddReference('RevitAPI') 
 clr.AddReference('RevitAPIUI') 
 import Autodesk.Revit.DB as db
+import Autodesk.Revit.UI as ui
 # local imports
 # ...
 
