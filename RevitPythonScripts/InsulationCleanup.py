@@ -1,6 +1,5 @@
 """Cleanup unhosted and rogue pipe and duct insulation."""
 
-import time
 import clr
 
 clr.AddReference("RevitAPI")
@@ -21,6 +20,7 @@ def main():
     report_file_name = "InsulationCleanup.txt"
 
     # Main Script
+    print("HELLO!")
     print("Running InsulationCleanup.py script...")
 
     # STEP 1: Inspect Model
@@ -169,10 +169,7 @@ def write_report(file_path, unhosted_pipe, rogue_pipe, unhosted_duct, rogue_duct
 
 
 if __name__ == "__main__":
-    start = time.clock()
     main()
-    runtime = time.clock() - start
-    print("Runtime = {0} seconds".format(runtime))
     # revit python shell console management
     raw_input("Hit any key to close.")
     __window__.Hide()
