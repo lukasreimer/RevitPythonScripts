@@ -15,15 +15,19 @@ import Autodesk.Revit.DB as db
 
 
 class InfoForm(Form):
-    """Information Display Form."""
+    """Information Display Form.
+    
+    Consider maybe using RevitAPIUI TaskDialog and FileDialog:
+    https://www.revitapidocs.com/2018.2/853afb57-7455-a636-9881-61a391118c16.htm
+    """
 
     def __init__(self):
         self.Text = "Info Form"
         self.Size = Size(300, 200)
         self.CenterToScreen()
 
-        mainPanel = FlowLayoutPanel()
-        mainPanel.FlowDirection = FlowDirection.TopDown
+        mainPanel = TableLayoutPanel()
+        # mainPanel.FlowDirection = FlowDirection.TopDown
         mainPanel.BorderStyle = BorderStyle.FixedSingle
         mainPanel.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top | AnchorStyles.Bottom
         mainPanel.Dock = DockStyle.Fill
@@ -32,12 +36,12 @@ class InfoForm(Form):
         lblInfo.Text = "This is some\nmulti line text.\n\nWhich is really cool.\n"
         lblInfo.Size = Size(200, 100)
         lblInfo.Location = Point(10, 10)
-        mainPanel.Controls.Add(lblInfo)
+        mainPanel.Controls.Add(lblInfo, 0, 0)
 
         buttonPanel = FlowLayoutPanel()
         buttonPanel.FlowDirection = FlowDirection.RightToLeft
         buttonPanel.BorderStyle = BorderStyle.Fixed3D
-        buttonPanel.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top | AnchorStyles.Bottom
+        buttonPanel.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
         buttonPanel.Dock = DockStyle.Right
 
         btnCancel = Button()
@@ -50,7 +54,7 @@ class InfoForm(Form):
         btnOK.Click += self.onClick
         buttonPanel.Controls.Add(btnOK)
 
-        mainPanel.Controls.Add(buttonPanel)
+        mainPanel.Controls.Add(buttonPanel, 0, 1)
         self.Controls.Add(mainPanel)
     
     def onClick(self, sender, args):
