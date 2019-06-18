@@ -1,11 +1,62 @@
 """Cleanup unhosted and rogue pipe and duct insulation."""
 
-import clr
-
-clr.AddReference("RevitAPI")
-import Autodesk.Revit.DB as db
 import collections
 import os
+
+import clr
+clr.AddReference("System.Windows.Forms")
+from System.Windows.Forms import (Application, Form, Button, Label,
+    TableLayoutPanel, FlowLayoutPanel, BorderStyle, AnchorStyles, FlowDirection,
+    DockStyle)
+clr.AddReference("System.Drawing")
+from System.Drawing import Size, Point
+clr.AddReference("RevitAPI")
+import Autodesk.Revit.DB as db
+
+
+class InfoForm(Form):
+    """Information Display Form."""
+
+    def __init__(self):
+        self.Text = "Info Form"
+        self.Size = Size(300, 200)
+        self.CenterToScreen()
+
+        mainPanel = FlowLayoutPanel()
+        mainPanel.FlowDirection = FlowDirection.TopDown
+        mainPanel.BorderStyle = BorderStyle.FixedSingle
+        mainPanel.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top | AnchorStyles.Bottom
+        mainPanel.Dock = DockStyle.Fill
+
+        lblInfo = Label()
+        lblInfo.Text = "This is some\nmulti line text.\n\nWhich is really cool.\n"
+        lblInfo.Size = Size(200, 100)
+        lblInfo.Location = Point(10, 10)
+        mainPanel.Controls.Add(lblInfo)
+
+        buttonPanel = FlowLayoutPanel()
+        buttonPanel.FlowDirection = FlowDirection.RightToLeft
+        buttonPanel.BorderStyle = BorderStyle.Fixed3D
+        buttonPanel.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top | AnchorStyles.Bottom
+        buttonPanel.Dock = DockStyle.Right
+
+        btnCancel = Button()
+        btnCancel.Text = "Cancel"
+        btnCancel.Click += self.onClick
+        buttonPanel.Controls.Add(btnCancel)
+
+        btnOK = Button()
+        btnOK.Text = "OK"
+        btnOK.Click += self.onClick
+        buttonPanel.Controls.Add(btnOK)
+
+        mainPanel.Controls.Add(buttonPanel)
+        self.Controls.Add(mainPanel)
+    
+    def onClick(self, sender, args):
+        """Clicked event of the forms buttons."""
+        print("OnClick Event: sender = {s}, args = {a}".format(s=sender, a=args))
+        self.Close()
 
 
 def main():
@@ -21,6 +72,9 @@ def main():
 
     # Main Script
     print("HELLO!")
+    info = InfoForm()
+    info.ShowDialog()
+
     print("Running InsulationCleanup.py script...")
 
     # STEP 1: Inspect Model
