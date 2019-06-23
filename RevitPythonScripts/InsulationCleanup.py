@@ -18,8 +18,8 @@ def main():
     doc = __revit__.ActiveUIDocument.Document
     pipe_ins_cat = db.BuiltInCategory.OST_PipeInsulations
     duct_ins_cat = db.BuiltInCategory.OST_DuctInsulations
-    clean_pipes = False
-    clean_ducts = False
+    clean_pipe = False
+    clean_duct = False
     report_file_name = "InsulationCleanup.txt"
 
     # Main Script
@@ -47,30 +47,43 @@ def main():
     #print_all(rogue_duct, indent=2)
 
     # STEP 2: Receive User Input
-    # print("[0] Report, [1] Clean Pipe, [2] Clean Duct, [3] Clean Both")
-    # answer = raw_input("?> ").strip()
-    # if answer == "0":
-    #     full_path = os.path.join(os.getcwd(), report_file_name)
-    #     write_report(file_path=full_path,
-    #                  unhosted_pipe=unhosted_pipe,
-    #                  rogue_pipe=rogue_pipe,
-    #                  unhosted_duct=unhosted_duct,
-    #                  rogue_duct=rogue_duct)
-    # elif answer == "1":
-    #     clean_pipes = True
-    # elif answer == "2":
-    #     clean_ducts = True
-    # elif answer == "3":
-    #     clean_pipes = True
-    #     clean_ducts = True
-    # else:
-    #     print("Nothing to do...")
+    dialog = ui.TaskDialog(title="Insulation Cleanup")
+    dialog.MainInstruction = "Insulation Cleanup"
+    dialog.MainContent = "Insulation Cleanup Report"
+    dialog.FooterText = "<a href=\"http://www.google.de\">Click here for more information</a>"
+    dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink1, "Write Report")
+    dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink2, "Clean Pipe Insulation")
+    dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink3, "Clean Duct Insulation")
+    dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink4, "Clean Pipe & Duct Insulation")
+    result = dialog.Show()
 
+    if result == ui.TaskDialogResult.CommandLink1:
+        print("Write Report")
+        save_dialog = ui.FileSaveDialog(filter="All files|*.*")
+        save_dialog.Title = "Save Insulation Cleanup Report"
+        save_dialog.InitialFileName = "report.txt"
+        save_result = save_dialog.Show()
+        report_path = save_dialog.GetSelectedModelPath()
+        print(save_result, report_path)
+        # TODO: actually save repor file
+    elif result == ui.TaskDialogResult.CommandLink2:
+        print("Clean Pipe Insulation")
+        clean_pipe = True
+    elif result == ui.TaskDialogResult.CommandLink3:
+        print("Clean Duct Insulation")
+        clean_duct = True
+    elif result == ui.TaskDialogResult.CommandLink4:
+        print("Clean Pipe & Duct Insulation")
+        clean_pipe = True
+        clean_duct = True
+    else:
+        print("Nothing to do...")
+    
     # STEP 3: Clean Up Insulation
     transaction = db.Transaction(doc)
     transaction.Start("InsulationCleanup.py")
     try:
-        if clean_pipes:
+        if clean_pipe:
             print("Cleaning Pipe Insulation...")
             for pipe_element in unhosted_pipe:
                 doc.Delete(pipe_element.Id)
@@ -80,7 +93,7 @@ def main():
                 num=len(unhosted_pipe)))
             print("Moved {num} rogue pipe insulation elements.".format(
                 num=len(rogue_pipe)))
-        if clean_ducts:
+        if clean_duct:
             print("Cleaning Duct Insulation...")
             for duct_element in unhosted_duct:
                 doc.Delete(duct_element.Id)
