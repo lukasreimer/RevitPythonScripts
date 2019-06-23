@@ -3,11 +3,9 @@
 import collections
 import os
 import clr
-
 clr.AddReference("RevitAPI")
-import Autodesk.Revit.DB as db
-
 clr.AddRefrence("RevitAPIUI")
+import Autodesk.Revit.DB as db
 import Autodesk.Revit.UI as ui
 
 
@@ -16,18 +14,15 @@ def main():
 
     # Setup
     doc = __revit__.ActiveUIDocument.Document
-    pipe_ins_cat = db.BuiltInCategory.OST_PipeInsulations
-    duct_ins_cat = db.BuiltInCategory.OST_DuctInsulations
     clean_pipe = False
     clean_duct = False
-    report_file_name = "InsulationCleanup.txt"
 
     # Main Script
     print("Running InsulationCleanup.py script...")
 
     # STEP 1: Inspect Model
-    pipe_ins_elems = query_all_elements(doc=doc, cat=pipe_ins_cat)
-    duct_ins_elems = query_all_elements(doc=doc, cat=duct_ins_cat)
+    pipe_ins_elems = query_all_elements(doc=doc, cat=db.BuiltInCategory.OST_PipeInsulations)
+    duct_ins_elems = query_all_elements(doc=doc, cat=db.BuiltInCategory.OST_DuctInsulations)
 
     print_summary(pipe_ins_elems, "Pipe Insulation Elements:")
     # print_all(pipe_insulation_elements, indent=2)
@@ -89,20 +84,16 @@ def main():
                 doc.Delete(pipe_element.Id)
             for pipe_pair in rogue_pipe:
                 cleanup_insulation(pipe_pair)
-            print("Deleted {num} unhosted pipe insulation elements".format(
-                num=len(unhosted_pipe)))
-            print("Moved {num} rogue pipe insulation elements.".format(
-                num=len(rogue_pipe)))
+            print("Deleted {num} unhosted pipe insulation elements".format(num=len(unhosted_pipe)))
+            print("Moved {num} rogue pipe insulation elements.".format(num=len(rogue_pipe)))
         if clean_duct:
             print("Cleaning Duct Insulation...")
             for duct_element in unhosted_duct:
                 doc.Delete(duct_element.Id)
             for duct_pair in rogue_duct:
                 cleanup_insulation(duct_pair)
-            print("Deleted {num} unhosted duct insulation elements.".format(
-                num=len(unhosted_duct)))
-            print("Moved {num} rogue duct insulation elements.".format(
-                num=len(rogue_duct)))
+            print("Deleted {num} unhosted duct insulation elements.".format(num=len(unhosted_duct)))
+            print("Moved {num} rogue duct insulation elements.".format(num=len(rogue_duct)))
     except Exception as exception:
         print("Failed.\nException:\n{ex}".format(ex=exception))
         transaction.RollBack()
@@ -120,8 +111,7 @@ def cleanup_insulation(pair):
     element_workset_id = pair.element.WorksetId.IntegerValue
     host_workset_id = pair.host.WorksetId.IntegerValue
     # get the host workset parameter for setting its value back and forth
-    host_workset_parameter = pair.host.get_Parameter(
-        db.BuiltInParameter.ELEM_PARTITION_PARAM)
+    host_workset_parameter = pair.host.get_Parameter(db.BuiltInParameter.ELEM_PARTITION_PARAM)
     host_workset_parameter.Set(element_workset_id)
     host_workset_parameter.Set(host_workset_id)
 
