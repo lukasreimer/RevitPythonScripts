@@ -4,7 +4,7 @@ import collections
 import os
 import clr
 clr.AddReference("RevitAPI")
-clr.AddRefrence("RevitAPIUI")
+clr.AddReference("RevitAPIUI")
 import Autodesk.Revit.DB as db
 import Autodesk.Revit.UI as ui
 
@@ -54,13 +54,13 @@ def main():
 
     if result == ui.TaskDialogResult.CommandLink1:
         print("Write Report")
-        save_dialog = ui.FileSaveDialog(filter="All files|*.*")
+        save_dialog = ui.FileSaveDialog(filter="Text files|*.txt")
         save_dialog.Title = "Save Insulation Cleanup Report"
         save_dialog.InitialFileName = "report.txt"
         save_result = save_dialog.Show()
         report_path = save_dialog.GetSelectedModelPath()
-        print(save_result, report_path)
-        # TODO: actually save repor file
+        print(save_result, str(report_path))
+        # TODO: actually save report file
     elif result == ui.TaskDialogResult.CommandLink2:
         print("Clean Pipe Insulation")
         clean_pipe = True
@@ -68,7 +68,7 @@ def main():
         print("Clean Duct Insulation")
         clean_duct = True
     elif result == ui.TaskDialogResult.CommandLink4:
-        print("Clean Pipe & Duct Insulation")
+        print("Clean Pipe and Duct Insulation")
         clean_pipe = True
         clean_duct = True
     else:
@@ -172,5 +172,5 @@ def write_report(path, upipe, rpipe, uduct, rduct):
 if __name__ == "__main__":
     main()
     # revit python shell console management
-    __window__.Hide()
-    __window__.Close()
+    # _window__.Hide()
+    # __window__.Close()
