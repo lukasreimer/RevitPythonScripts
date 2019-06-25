@@ -4,6 +4,7 @@ import collections
 import datetime
 import itertools
 import os
+import string
 import clr
 clr.AddReference("RevitAPI")
 clr.AddReference("RevitAPIUI")
@@ -26,27 +27,20 @@ def main():
     pipe_ins_elems = query_all_elements(doc=doc, cat=db.BuiltInCategory.OST_PipeInsulations)
     duct_ins_elems = query_all_elements(doc=doc, cat=db.BuiltInCategory.OST_DuctInsulations)
 
-    print_summary(pipe_ins_elems, "Pipe Insulation Elements:")
-    # print_all(pipe_insulation_elements, indent=2)
-    print_summary(duct_ins_elems, "Duct Insulation Elements:")
-    # print_all(duct_insulation_elements, indent=2)
-
     rogue_pipe, unhosted_pipe = find_rogue_elements(doc=doc, elems=pipe_ins_elems)
     rogue_duct, unhosted_duct = find_rogue_elements(doc=doc, elems=duct_ins_elems)
 
-    print_summary(unhosted_pipe, "Unhosted Pipe Insulation Summary:")
-    # print_all(unhosted_pipe, indent=2)
-    print_summary(rogue_pipe, "Rogue Pipe Insulation Summary:")
-    # print_all(rogue_pipe, indent=2)
-    print_summary(unhosted_duct, "Unhosted Duct Insulation Summary:")
-    # print_all(unhosted_duct, indent=2)
-    print_summary(rogue_duct, "Rogue Duct Insulation Summary:")
-    #print_all(rogue_duct, indent=2)
+    summary_list = write_summary(
+        tpipe=pipe_ins_elems, tduct=duct_ins_elems,  # totals
+        upipe= unhosted_pipe, uduct=unhosted_duct,  # unhosted
+        rpipe=rogue_pipe, rduct=rogue_duct)  # rogue
+    summary_text = string.join(summary_list, "\n")
+    print(summary_text)
 
     # STEP 2: Receive User Input
     dialog = ui.TaskDialog(title="Insulation Cleanup")
-    dialog.MainInstruction = "Insulation Cleanup"
-    dialog.MainContent = "Insulation Cleanup Report"
+    dialog.MainInstruction = "Insulation Cleanup Summary"
+    dialog.MainContent = summary_text
     dialog.FooterText = "<a href=\"http://www.google.de\">Ask Google</a>"
     dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink1, "Write Report")
     dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink2, "Clean Insulation")
@@ -155,9 +149,13 @@ def print_all(elems, caption=None, indent=0):
             total=total,
             element=element))
 
-def write_summary(upipe, rpipe, uduct, rduct):
+def write_summary(tpipe, tduct, upipe, rpipe, uduct, rduct):
     """Write a summary of unhosted and rogue insulation elements."""
-    pass
+    summary = []
+    summary.append("Pipe: unhosted={uh:4d}, rogue={ro:4d} (total={tot:6d})".format(uh=len(upipe), ro=len(rpipe), tot=len(tpipe)))
+    summary.append("Duct: unhosted={uh:4d}, rogue={ro:4d} (total={tot:6d})".format(uh=len(uduct), ro=len(rduct), tot=len(tduct)))
+    return summary
+
 
 def write_report(doc, upipe, rpipe, uduct, rduct):
     """Write report of unhosted and rogue insulation elements."""
