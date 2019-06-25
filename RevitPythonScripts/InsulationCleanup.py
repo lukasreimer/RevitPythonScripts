@@ -10,7 +10,6 @@ clr.AddReference("RevitAPI")
 clr.AddReference("RevitAPIUI")
 import Autodesk.Revit.DB as db
 import Autodesk.Revit.UI as ui
-
 clr.AddReference("System.Windows.Forms")
 import System.Windows.Forms as swf
 
@@ -24,8 +23,8 @@ def main():
     doc = __revit__.ActiveUIDocument.Document
 
     # STEP 1: Inspect Model
-    pipe_ins_elems = query_all_elements(doc=doc, cat=db.BuiltInCategory.OST_PipeInsulations)
-    duct_ins_elems = query_all_elements(doc=doc, cat=db.BuiltInCategory.OST_DuctInsulations)
+    pipe_ins_elems = query_all_elements_of_category(doc=doc, cat=db.BuiltInCategory.OST_PipeInsulations)
+    duct_ins_elems = query_all_elements_of_category(doc=doc, cat=db.BuiltInCategory.OST_DuctInsulations)
 
     rogue_pipe, unhosted_pipe = find_rogue_elements(doc=doc, elems=pipe_ins_elems)
     rogue_duct, unhosted_duct = find_rogue_elements(doc=doc, elems=duct_ins_elems)
@@ -44,6 +43,8 @@ def main():
     dialog.FooterText = "<a href=\"http://www.google.de\">Ask Google</a>"
     dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink1, "Write Report")
     dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink2, "Clean Insulation")
+    dialog.CommonButtons = ui.TaskDialogCommonButtons.Close;
+    dialog.DefaultButton = ui.TaskDialogResult.Close;
     result = dialog.Show()
 
     # STEP 3: Write report or clean up insulation
@@ -52,7 +53,7 @@ def main():
         save_dialog.Title = "Save Insulation Cleanup Report"
         save_dialog.Filter = "Text files|*.txt"
         save_dialog.FileName = "report.txt"
-        if save_dialog.ShowDialog() == swf.DialogResult.OK:
+        if save_dialog.ShowDialog() == swf.DialogResult.OK:  # Save report
             file_path = save_dialog.FileName
             print("Writing report to {0}".format(file_path))
             # TODO: actually save report file
@@ -61,9 +62,8 @@ def main():
                 for line in report:
                     fh.write("{ln}\r\n".format(ln=line))
                 print("Done.")
-        else:
+        else:  # Don't save report
             print("File save dialog canceled.")
-
     elif result == ui.TaskDialogResult.CommandLink2:  # Clean Insulation
         transaction = db.Transaction(doc)
         transaction.Start("InsulationCleanup.py")
@@ -95,7 +95,7 @@ def main():
 ElementHostPair = collections.namedtuple("ElementHostPair", ["element", "host"])
 
 
-def query_all_elements(doc, cat):
+def query_all_elements_of_category(doc, cat):
     """Return all elements of a category from a document."""
     filter = db.ElementCategoryFilter(cat)
     collector = db.FilteredElementCollector(doc)
@@ -169,5 +169,5 @@ def write_report(doc, upipe, rpipe, uduct, rduct):
 if __name__ == "__main__":
     main()
     # revit python shell console management
-    # _window__.Hide()
+    # __window__.Hide()
     # __window__.Close()
