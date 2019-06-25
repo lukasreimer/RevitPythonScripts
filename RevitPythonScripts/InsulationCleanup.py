@@ -8,6 +8,9 @@ clr.AddReference("RevitAPIUI")
 import Autodesk.Revit.DB as db
 import Autodesk.Revit.UI as ui
 
+clr.AddReference("System.Windows.Forms")
+import System.Windows.Forms as swf
+
 
 def main():
     """Main Script."""
@@ -54,18 +57,15 @@ def main():
 
     if result == ui.TaskDialogResult.CommandLink1:
         print("Write Report")
-        save_dialog = ui.FileSaveDialog(filter="Text files|*.txt")
+        save_dialog = swf.SaveFileDialog()
         save_dialog.Title = "Save Insulation Cleanup Report"
-        save_dialog.InitialFileName = "report.txt"
-        save_result = save_dialog.Show()
-        print(save_result)
-        print(dir(save_result))
-        print(save_dialog)
-        print(dir(save_dialog))
-        report_path = save_dialog.GetSelectedModelPath()
-        print(report_path)
-        print(dir(report_path))
-        # TODO: actually save report file
+        save_dialog.Filter = "Text files|*.txt"
+        save_dialog.FileName = "report.txt"
+        if save_dialog.ShowDialog() == swf.DialogResult.OK:
+            print(save_dialog.FileName)
+            # TODO: actually save report file
+        else:
+            print("File save dialog canceled.")
         
     elif result == ui.TaskDialogResult.CommandLink2:
         print("Clean Pipe Insulation")
