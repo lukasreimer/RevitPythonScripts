@@ -58,9 +58,15 @@ def main():
         save_dialog.Title = "Save Insulation Cleanup Report"
         save_dialog.InitialFileName = "report.txt"
         save_result = save_dialog.Show()
+        print(save_result)
+        print(dir(save_result))
+        print(save_dialog)
+        print(dir(save_dialog))
         report_path = save_dialog.GetSelectedModelPath()
-        print(save_result, str(report_path))
+        print(report_path)
+        print(dir(report_path))
         # TODO: actually save report file
+        
     elif result == ui.TaskDialogResult.CommandLink2:
         print("Clean Pipe Insulation")
         clean_pipe = True
