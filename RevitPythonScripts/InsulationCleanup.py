@@ -1,6 +1,7 @@
 """Cleanup unhosted and rogue pipe and duct insulation."""
 
 import collections
+import datetime
 import itertools
 import os
 import clr
@@ -61,9 +62,10 @@ def main():
             file_path = save_dialog.FileName
             print("Writing report to {0}".format(file_path))
             # TODO: actually save report file
-            with open(file_path, mode="w") as fh:
-                report = write_report(unhosted_pipe, rogue_pipe, unhosted_duct, rogue_duct)
-                fh.writelines(report)
+            with open(file_path, mode="wb") as fh:
+                report = write_report(doc, unhosted_pipe, rogue_pipe, unhosted_duct, rogue_duct)
+                for line in report:
+                    fh.write("{ln}\n".format(ln=line))
                 print("Done.")
         else:
             print("File save dialog canceled.")
@@ -157,18 +159,30 @@ def write_summary(upipe, rpipe, uduct, rduct):
     """Write a summary of unhosted and rogue insulation elements."""
     pass
 
-def write_report(upipe, rpipe, uduct, rduct):
+def write_report(doc, upipe, rpipe, uduct, rduct):
     """Write report of unhosted and rogue insulation elements."""
+    workset_table = doc.GetWorksetTable()
     report = []
-    status = "time: ...".format()
-    report.append(status)
-    header = "type, id".format()
-    report.append(header)
-    total = len(upipe) + len(rpipe) + len(uduct) + len(rduct)
-    for idx, elem in enumerate(itertools.chain(upipe, rpipe, uduct, rduct)):
-        line = "[{idx}/{tot}] {elem}\n".format(idx=idx, tot=total, elem=elem)
+    report.append("time: {now}".format(now=datetime.datetime.now()))
+    report.append("[index/total] element, host")
+    total_unhosted = len(upipe) + len(uduct)
+    total_rogue = len(rpipe) + len(rduct)
+    report.append("--- Unhosted: {num_unhosted} elements ---".format(num_unhosted=total_unhosted))
+    for idx, pair in enumerate(itertools.chain(upipe, uduct)):
+        elem, host = pair
+        line = "[{idx}/{tot}] #{e_id}, {e_name} @'{e_workset}' --> #{h_id}, {h_name} @'{h_workset}'".format(
+            idx=idx, tot=total_unhosted,
+            e_id=elem.Id, e_name=elem.Name, e_workset=workset_table.GetWorkset(elem.WorksetId).Name,
+            h_id=host.Id, h_name=host.Name, h_workset=workset_table.GetWorkset(host.WorksetId).Name)
         report.append(line)
-        print(report)
+    report.append("--- Rogue: {num_rogue} elements ---".format(num_rogue=total_rogue))
+    for idx, pair in enumerate(itertools.chain(upipe, rpipe, uduct, rduct)):
+        elem, host = pair
+        line = "[{idx}/{tot}] #{e_id}, {e_name} @'{e_workset}' --> #{h_id}, {h_name} @'{h_workset}'".format(
+            idx=idx, tot=total_rogue,
+            e_id=elem.Id, e_name=elem.Name, e_workset=workset_table.GetWorkset(elem.WorksetId).Name,
+            h_id=host.Id, h_name=host.Name, h_workset=workset_table.GetWorkset(host.WorksetId).Name)
+        report.append(line)
     return report
 
 
