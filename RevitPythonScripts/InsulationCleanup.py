@@ -1,66 +1,16 @@
 """Cleanup unhosted and rogue pipe and duct insulation."""
 
 import collections
+import itertools
 import os
-
 import clr
-clr.AddReference("System.Windows.Forms")
-from System.Windows.Forms import (Application, Form, Button, Label,
-    TableLayoutPanel, FlowLayoutPanel, BorderStyle, AnchorStyles, FlowDirection,
-    DockStyle)
-clr.AddReference("System.Drawing")
-from System.Drawing import Size, Point
 clr.AddReference("RevitAPI")
+clr.AddReference("RevitAPIUI")
 import Autodesk.Revit.DB as db
+import Autodesk.Revit.UI as ui
 
-
-class InfoForm(Form):
-    """Information Display Form.
-    
-    Consider maybe using RevitAPIUI TaskDialog and FileDialog:
-    https://www.revitapidocs.com/2018.2/853afb57-7455-a636-9881-61a391118c16.htm
-    """
-
-    def __init__(self):
-        self.Text = "Info Form"
-        self.Size = Size(300, 200)
-        self.CenterToScreen()
-
-        mainPanel = TableLayoutPanel()
-        # mainPanel.FlowDirection = FlowDirection.TopDown
-        mainPanel.BorderStyle = BorderStyle.FixedSingle
-        mainPanel.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top | AnchorStyles.Bottom
-        mainPanel.Dock = DockStyle.Fill
-
-        lblInfo = Label()
-        lblInfo.Text = "This is some\nmulti line text.\n\nWhich is really cool.\n"
-        lblInfo.Size = Size(200, 100)
-        lblInfo.Location = Point(10, 10)
-        mainPanel.Controls.Add(lblInfo, 0, 0)
-
-        buttonPanel = FlowLayoutPanel()
-        buttonPanel.FlowDirection = FlowDirection.RightToLeft
-        buttonPanel.BorderStyle = BorderStyle.Fixed3D
-        buttonPanel.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
-        buttonPanel.Dock = DockStyle.Right
-
-        btnCancel = Button()
-        btnCancel.Text = "Cancel"
-        btnCancel.Click += self.onClick
-        buttonPanel.Controls.Add(btnCancel)
-
-        btnOK = Button()
-        btnOK.Text = "OK"
-        btnOK.Click += self.onClick
-        buttonPanel.Controls.Add(btnOK)
-
-        mainPanel.Controls.Add(buttonPanel, 0, 1)
-        self.Controls.Add(mainPanel)
-    
-    def onClick(self, sender, args):
-        """Clicked event of the forms buttons."""
-        print("OnClick Event: sender = {s}, args = {a}".format(s=sender, a=args))
-        self.Close()
+clr.AddReference("System.Windows.Forms")
+import System.Windows.Forms as swf
 
 
 def main():
@@ -68,11 +18,8 @@ def main():
 
     # Setup
     doc = __revit__.ActiveUIDocument.Document
-    pipe_insulation_category = db.BuiltInCategory.OST_PipeInsulations
-    duct_insulation_category = db.BuiltInCategory.OST_DuctInsulations
-    clean_pipes = False
-    clean_ducts = False
-    report_file_name = "InsulationCleanup.txt"
+    clean_pipe = False
+    clean_duct = False
 
     # Main Script
     print("HELLO!")
@@ -82,20 +29,16 @@ def main():
     print("Running InsulationCleanup.py script...")
 
     # STEP 1: Inspect Model
-    pipe_insulation_elements = query_all_elements(
-        document=doc, category=pipe_insulation_category)
-    duct_insulation_elements = query_all_elements(
-        document=doc, category=duct_insulation_category)
+    pipe_ins_elems = query_all_elements(doc=doc, cat=db.BuiltInCategory.OST_PipeInsulations)
+    duct_ins_elems = query_all_elements(doc=doc, cat=db.BuiltInCategory.OST_DuctInsulations)
 
-    print_summary(pipe_insulation_elements, "Pipe Insulation Elements:")
+    print_summary(pipe_ins_elems, "Pipe Insulation Elements:")
     # print_all(pipe_insulation_elements, indent=2)
-    print_summary(duct_insulation_elements, "Duct Insulation Elements:")
+    print_summary(duct_ins_elems, "Duct Insulation Elements:")
     # print_all(duct_insulation_elements, indent=2)
 
-    rogue_pipe, unhosted_pipe = find_rogue_elements(
-        document=doc, insulation_elements=pipe_insulation_elements)
-    rogue_duct, unhosted_duct = find_rogue_elements(
-        document=doc, insulation_elements=duct_insulation_elements)
+    rogue_pipe, unhosted_pipe = find_rogue_elements(doc=doc, elems=pipe_ins_elems)
+    rogue_duct, unhosted_duct = find_rogue_elements(doc=doc, elems=duct_ins_elems)
 
     print_summary(unhosted_pipe, "Unhosted Pipe Insulation Summary:")
     # print_all(unhosted_pipe, indent=2)
@@ -107,55 +50,57 @@ def main():
     #print_all(rogue_duct, indent=2)
 
     # STEP 2: Receive User Input
-    print("[0] Report, [1] Clean Pipe, [2] Clean Duct, [3] Clean Both")
-    answer = raw_input("?> ").strip()
-    if answer == "0":
-        full_path = os.path.join(os.getcwd(), report_file_name)
-        write_report(file_path=full_path,
-                     unhosted_pipe=unhosted_pipe,
-                     rogue_pipe=rogue_pipe,
-                     unhosted_duct=unhosted_duct,
-                     rogue_duct=rogue_duct)
-    elif answer == "1":
-        clean_pipes = True
-    elif answer == "2":
-        clean_ducts = True
-    elif answer == "3":
-        clean_pipes = True
-        clean_ducts = True
-    else:
-        print("Nothing to do...")
+    dialog = ui.TaskDialog(title="Insulation Cleanup")
+    dialog.MainInstruction = "Insulation Cleanup"
+    dialog.MainContent = "Insulation Cleanup Report"
+    dialog.FooterText = "<a href=\"http://www.google.de\">Ask Google</a>"
+    dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink1, "Write Report")
+    dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink2, "Clean Insulation")
+    result = dialog.Show()
 
-    # STEP 3: Clean Up Insulation
-    transaction = db.Transaction(doc)
-    transaction.Start("InsulationCleanup.py")
-    try:
-        if clean_pipes:
-            print("Cleaning Pipe Insulation...")
+    # STEP 3: Write report or clean up insulation
+    if result == ui.TaskDialogResult.CommandLink1:
+
+        save_dialog = swf.SaveFileDialog()
+        save_dialog.Title = "Save Insulation Cleanup Report"
+        save_dialog.Filter = "Text files|*.txt"
+        save_dialog.FileName = "report.txt"
+        if save_dialog.ShowDialog() == swf.DialogResult.OK:
+            file_path = save_dialog.FileName
+            print("Writing report to {0}".format(file_path))
+            # TODO: actually save report file
+            with open(file_path, mode="w") as fh:
+                report = write_report(unhosted_pipe, rogue_pipe, unhosted_duct, rogue_duct)
+                fh.writelines(report)
+                print("Done.")
+        else:
+            print("File save dialog canceled.")
+
+    elif result == ui.TaskDialogResult.CommandLink2:
+        transaction = db.Transaction(doc)
+        transaction.Start("InsulationCleanup.py")
+        try:
+            print("Cleaning Insulation...")
             for pipe_element in unhosted_pipe:
                 doc.Delete(pipe_element.Id)
+            print("Deleted {num} unhosted pipe insulation elements".format(num=len(unhosted_pipe)))
             for pipe_pair in rogue_pipe:
                 cleanup_insulation(pipe_pair)
-            print("Deleted {num} unhosted pipe insulation elements".format(
-                num=len(unhosted_pipe)))
-            print("Moved {num} rogue pipe insulation elements.".format(
-                num=len(rogue_pipe)))
-        if clean_ducts:
-            print("Cleaning Duct Insulation...")
+            print("Moved {num} rogue pipe insulation elements.".format(num=len(rogue_pipe)))
             for duct_element in unhosted_duct:
                 doc.Delete(duct_element.Id)
+            print("Deleted {num} unhosted duct insulation elements.".format(num=len(unhosted_duct)))
             for duct_pair in rogue_duct:
                 cleanup_insulation(duct_pair)
-            print("Deleted {num} unhosted duct insulation elements.".format(
-                num=len(unhosted_duct)))
-            print("Moved {num} rogue duct insulation elements.".format(
-                num=len(rogue_duct)))
-    except Exception as exception:
-        print("Failed.\nException:\n{ex}".format(ex=exception))
-        transaction.RollBack()
+            print("Moved {num} rogue duct insulation elements.".format(num=len(rogue_duct)))
+        except Exception as exception:
+            print("Failed.\nException:\n{ex}".format(ex=exception))
+            transaction.RollBack()
+        else:
+            print("Done.")
+            transaction.Commit()
     else:
-        print("Done.")
-        transaction.Commit()
+        print("Nothing to do.")
 
 
 # Helpers:
@@ -167,19 +112,18 @@ def cleanup_insulation(pair):
     element_workset_id = pair.element.WorksetId.IntegerValue
     host_workset_id = pair.host.WorksetId.IntegerValue
     # get the host workset parameter for setting its value back and forth
-    host_workset_parameter = pair.host.get_Parameter(
-        db.BuiltInParameter.ELEM_PARTITION_PARAM)
+    host_workset_parameter = pair.host.get_Parameter(db.BuiltInParameter.ELEM_PARTITION_PARAM)
     host_workset_parameter.Set(element_workset_id)
     host_workset_parameter.Set(host_workset_id)
 
 
-def find_rogue_elements(document, insulation_elements):
+def find_rogue_elements(doc, elems):
     """Find all unhosted or rogue insulation elements."""
     unhosted_elements = []
     rogue_elements = []
-    for element in insulation_elements:
+    for element in elems:
         host_id = element.HostElementId
-        host_element = document.GetElement(host_id)
+        host_element = doc.GetElement(host_id)
         if host_element is None:
             unhosted_elements.append(element)
         else:
@@ -188,10 +132,10 @@ def find_rogue_elements(document, insulation_elements):
     return rogue_elements, unhosted_elements
 
 
-def query_all_elements(document, category):
+def query_all_elements(doc, cat):
     """Return all elements of a category from a document."""
-    filter = db.ElementCategoryFilter(category)
-    collector = db.FilteredElementCollector(document)
+    filter = db.ElementCategoryFilter(cat)
+    collector = db.FilteredElementCollector(doc)
     elements = collector.WherePasses(filter)\
                         .WhereElementIsNotElementType()\
                         .ToElements()
@@ -199,36 +143,45 @@ def query_all_elements(document, category):
     return elements
 
 
-def print_summary(element_list, caption=""):
+def print_summary(elems, caption=""):
     """Print a summary of the given list."""
-    length = element_list.Count
+    length = elems.Count
     print("{caption} {length}".format(caption=caption, length=length))
 
 
-def print_all(element_list, caption=None, indent=0):
+def print_all(elems, caption=None, indent=0):
     """Print all elements from the given list."""
-    total = element_list.Count
+    total = elems.Count
     if caption:
         print(caption)
-    for index, element in enumerate(element_list):
+    for index, element in enumerate(elems):
         print("{indent}[{index}/{total}]: {element}".format(
             indent=indent*" ",
             index=index,
             total=total,
             element=element))
 
-def write_report(file_path, unhosted_pipe, rogue_pipe, unhosted_duct, rogue_duct):
-    """Write report of unhosted and rogue insulation elements to a file."""
-    print("writing report at {}".format(file_path))
-    with open(file_path, mode="w") as file:
-        file.write("Hello World!\n")
-        # TODO: implement output time stamp
-        # TODO: implement report creation
+def write_summary(upipe, rpipe, uduct, rduct):
+    """Write a summary of unhosted and rogue insulation elements."""
+    pass
+
+def write_report(upipe, rpipe, uduct, rduct):
+    """Write report of unhosted and rogue insulation elements."""
+    report = []
+    status = "time: ...".format()
+    report.append(status)
+    header = "type, id".format()
+    report.append(header)
+    total = len(upipe) + len(rpipe) + len(uduct) + len(rduct)
+    for idx, elem in enumerate(itertools.chain(upipe, rpipe, uduct, rduct)):
+        line = "[{idx}/{tot}] {elem}\n".format(idx=idx, tot=total, elem=elem)
+        report.append(line)
+        print(report)
+    return report
 
 
 if __name__ == "__main__":
     main()
     # revit python shell console management
-    raw_input("Hit any key to close.")
-    __window__.Hide()
-    __window__.Close()
+    # _window__.Hide()
+    # __window__.Close()
