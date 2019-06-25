@@ -1,6 +1,7 @@
 """Cleanup unhosted and rogue pipe and duct insulation."""
 
 import collections
+import itertools
 import os
 import clr
 clr.AddReference("RevitAPI")
@@ -48,65 +49,55 @@ def main():
     dialog = ui.TaskDialog(title="Insulation Cleanup")
     dialog.MainInstruction = "Insulation Cleanup"
     dialog.MainContent = "Insulation Cleanup Report"
-    dialog.FooterText = "<a href=\"http://www.google.de\">Click here for more information</a>"
+    dialog.FooterText = "<a href=\"http://www.google.de\">Ask Google</a>"
     dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink1, "Write Report")
-    dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink2, "Clean Pipe Insulation")
-    dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink3, "Clean Duct Insulation")
-    dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink4, "Clean Pipe & Duct Insulation")
+    dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink2, "Clean Insulation")
     result = dialog.Show()
 
+    # STEP 3: Write report or clean up insulation
     if result == ui.TaskDialogResult.CommandLink1:
-        print("Write Report")
+       
         save_dialog = swf.SaveFileDialog()
         save_dialog.Title = "Save Insulation Cleanup Report"
         save_dialog.Filter = "Text files|*.txt"
         save_dialog.FileName = "report.txt"
         if save_dialog.ShowDialog() == swf.DialogResult.OK:
-            print(save_dialog.FileName)
+            file_path = save_dialog.FileName
+            print("Writing report to {0}".format(file_path))
             # TODO: actually save report file
+            with open(file_path, mode="w") as fh:
+                report = write_report(unhosted_pipe, rogue_pipe, unhosted_duct, rogue_duct)
+                fh.writelines(report)
+                print("Done.")
         else:
             print("File save dialog canceled.")
         
     elif result == ui.TaskDialogResult.CommandLink2:
-        print("Clean Pipe Insulation")
-        clean_pipe = True
-    elif result == ui.TaskDialogResult.CommandLink3:
-        print("Clean Duct Insulation")
-        clean_duct = True
-    elif result == ui.TaskDialogResult.CommandLink4:
-        print("Clean Pipe and Duct Insulation")
-        clean_pipe = True
-        clean_duct = True
-    else:
-        print("Nothing to do...")
-    
-    # STEP 3: Clean Up Insulation
-    transaction = db.Transaction(doc)
-    transaction.Start("InsulationCleanup.py")
-    try:
-        if clean_pipe:
-            print("Cleaning Pipe Insulation...")
+        transaction = db.Transaction(doc)
+        transaction.Start("InsulationCleanup.py")
+        try:
+            print("Cleaning Insulation...")
             for pipe_element in unhosted_pipe:
                 doc.Delete(pipe_element.Id)
+            print("Deleted {num} unhosted pipe insulation elements".format(num=len(unhosted_pipe)))
             for pipe_pair in rogue_pipe:
                 cleanup_insulation(pipe_pair)
-            print("Deleted {num} unhosted pipe insulation elements".format(num=len(unhosted_pipe)))
             print("Moved {num} rogue pipe insulation elements.".format(num=len(rogue_pipe)))
-        if clean_duct:
-            print("Cleaning Duct Insulation...")
             for duct_element in unhosted_duct:
                 doc.Delete(duct_element.Id)
+            print("Deleted {num} unhosted duct insulation elements.".format(num=len(unhosted_duct)))
             for duct_pair in rogue_duct:
                 cleanup_insulation(duct_pair)
-            print("Deleted {num} unhosted duct insulation elements.".format(num=len(unhosted_duct)))
             print("Moved {num} rogue duct insulation elements.".format(num=len(rogue_duct)))
-    except Exception as exception:
-        print("Failed.\nException:\n{ex}".format(ex=exception))
-        transaction.RollBack()
+        except Exception as exception:
+            print("Failed.\nException:\n{ex}".format(ex=exception))
+            transaction.RollBack()
+        else:
+            print("Done.")
+            transaction.Commit()
     else:
-        print("Done.")
-        transaction.Commit()
-
+        print("Nothing to do.")
+    
 
 # Helpers:
 ElementHostPair = collections.namedtuple("ElementHostPair", ["element", "host"])
@@ -166,13 +157,23 @@ def print_all(elems, caption=None, indent=0):
             total=total,
             element=element))
 
-def write_report(path, upipe, rpipe, uduct, rduct):
-    """Write report of unhosted and rogue insulation elements to a file."""
-    print("writing report at {}".format(path))
-    with open(path, mode="w") as file:
-        file.write("Hello World!\n")
-        # TODO: implement output time stamp
-        # TODO: implement report creation
+def write_summary(upipe, rpipe, uduct, rduct):
+    """Write a summary of unhosted and rogue insulation elements."""
+    pass
+
+def write_report(upipe, rpipe, uduct, rduct):
+    """Write report of unhosted and rogue insulation elements."""
+    report = []
+    status = "time: ...".format()
+    report.append(status)
+    header = "type, id".format()
+    report.append(header)
+    total = len(upipe) + len(rpipe) + len(uduct) + len(rduct)
+    for idx, elem in enumerate(itertools.chain(upipe, rpipe, uduct, rduct)):
+        line = "[{idx}/{tot}] {elem}\n".format(idx=idx, tot=total, elem=elem)
+        report.append(line)
+        print(report)
+    return report
 
 
 if __name__ == "__main__":
