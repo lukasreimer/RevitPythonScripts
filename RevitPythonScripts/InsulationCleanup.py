@@ -59,7 +59,7 @@ def main():
             with open(file_path, mode="wb") as fh:
                 report = write_report(doc, unhosted_pipe, rogue_pipe, unhosted_duct, rogue_duct)
                 for line in report:
-                    fh.write("{ln}\n".format(ln=line))
+                    fh.write("{ln}\r\n".format(ln=line))
                 print("Done.")
         else:
             print("File save dialog canceled.")
@@ -95,14 +95,15 @@ def main():
 ElementHostPair = collections.namedtuple("ElementHostPair", ["element", "host"])
 
 
-def cleanup_insulation(pair):
-    """Cleanup rogue insulation elements."""
-    element_workset_id = pair.element.WorksetId.IntegerValue
-    host_workset_id = pair.host.WorksetId.IntegerValue
-    # get the host workset parameter for setting its value back and forth
-    host_workset_parameter = pair.host.get_Parameter(db.BuiltInParameter.ELEM_PARTITION_PARAM)
-    host_workset_parameter.Set(element_workset_id)
-    host_workset_parameter.Set(host_workset_id)
+def query_all_elements(doc, cat):
+    """Return all elements of a category from a document."""
+    filter = db.ElementCategoryFilter(cat)
+    collector = db.FilteredElementCollector(doc)
+    elements = collector.WherePasses(filter)\
+                        .WhereElementIsNotElementType()\
+                        .ToElements()
+    # pythonic_elements = [element for element in elements]
+    return elements
 
 
 def find_rogue_elements(doc, elems):
@@ -120,34 +121,15 @@ def find_rogue_elements(doc, elems):
     return rogue_elements, unhosted_elements
 
 
-def query_all_elements(doc, cat):
-    """Return all elements of a category from a document."""
-    filter = db.ElementCategoryFilter(cat)
-    collector = db.FilteredElementCollector(doc)
-    elements = collector.WherePasses(filter)\
-                        .WhereElementIsNotElementType()\
-                        .ToElements()
-    # pythonic_elements = [element for element in elements]
-    return elements
+def cleanup_insulation(pair):
+    """Cleanup rogue insulation elements."""
+    element_workset_id = pair.element.WorksetId.IntegerValue
+    host_workset_id = pair.host.WorksetId.IntegerValue
+    # get the host workset parameter for setting its value back and forth
+    host_workset_parameter = pair.host.get_Parameter(db.BuiltInParameter.ELEM_PARTITION_PARAM)
+    host_workset_parameter.Set(element_workset_id)
+    host_workset_parameter.Set(host_workset_id)
 
-
-def print_summary(elems, caption=""):
-    """Print a summary of the given list."""
-    length = elems.Count
-    print("{caption} {length}".format(caption=caption, length=length))
-
-
-def print_all(elems, caption=None, indent=0):
-    """Print all elements from the given list."""
-    total = elems.Count
-    if caption:
-        print(caption)
-    for index, element in enumerate(elems):
-        print("{indent}[{index}/{total}]: {element}".format(
-            indent=indent*" ",
-            index=index,
-            total=total,
-            element=element))
 
 def write_summary(tpipe, tduct, upipe, rpipe, uduct, rduct):
     """Write a summary of unhosted and rogue insulation elements."""
