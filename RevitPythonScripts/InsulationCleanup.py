@@ -16,17 +16,10 @@ import System.Windows.Forms as swf
 def main():
     """Main Script."""
 
-    # Setup
-    doc = __revit__.ActiveUIDocument.Document
-    clean_pipe = False
-    clean_duct = False
-
-    # Main Script
-    print("HELLO!")
-    info = InfoForm()
-    info.ShowDialog()
-
     print("Running InsulationCleanup.py script...")
+
+    # STEP 0: Setup
+    doc = __revit__.ActiveUIDocument.Document
 
     # STEP 1: Inspect Model
     pipe_ins_elems = query_all_elements(doc=doc, cat=db.BuiltInCategory.OST_PipeInsulations)
@@ -59,8 +52,7 @@ def main():
     result = dialog.Show()
 
     # STEP 3: Write report or clean up insulation
-    if result == ui.TaskDialogResult.CommandLink1:
-
+    if result == ui.TaskDialogResult.CommandLink1:  # Write report
         save_dialog = swf.SaveFileDialog()
         save_dialog.Title = "Save Insulation Cleanup Report"
         save_dialog.Filter = "Text files|*.txt"
@@ -76,7 +68,7 @@ def main():
         else:
             print("File save dialog canceled.")
 
-    elif result == ui.TaskDialogResult.CommandLink2:
+    elif result == ui.TaskDialogResult.CommandLink2:  # Clean Insulation
         transaction = db.Transaction(doc)
         transaction.Start("InsulationCleanup.py")
         try:
