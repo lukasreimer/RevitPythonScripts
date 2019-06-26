@@ -1,7 +1,7 @@
 # RevitPythonScripts
 
 This is a library of small Python scripts for Revit.
-They can be used with Revit Python Shell directly from the Revit Ribbon or the Revit Python Shell interactive scriptiung environment.
+They can be used with Revit Python Shell directly from the Revit Ribbon or the Revit Python Shell interactive scripting environment.
 
 
 ## Installation of Revit Python Shell
