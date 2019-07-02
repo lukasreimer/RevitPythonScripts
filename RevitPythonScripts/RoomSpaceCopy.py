@@ -1,6 +1,5 @@
 """Create Spaces from linked Rooms."""
 
-import time
 import sys
 import clr
 clr.AddReference('RevitAPI')
@@ -107,11 +106,7 @@ def find_closest_level(levels, elevation):
 
 
 if __name__ == "__main__":
-    start = time.clock()
     main()
-    runtime = time.clock() - start
-    print("Runtime = {0} seconds".format(runtime))
-
     #revit python shell has a console, access it like so
     #__window__.Hide()
     #__window__.Close()

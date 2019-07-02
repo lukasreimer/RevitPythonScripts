@@ -1,6 +1,5 @@
 """Delete all spaces in the model."""
 
-import time
 import clr
 clr.AddReference('RevitAPI')
 clr.AddReference('RevitAPIUI')
@@ -13,10 +12,7 @@ def main():
     print("Running Space Delete script for deleting Spaces...")
     
     # Important Revit variables
-    # app = __revit__.Application
     doc = __revit__.ActiveUIDocument.Document
-    # uidoc = __revit__.ActiveUIDocument
-    # view = doc.ActiveView
 
     # Get all Spaces from the model
     spaces = db.FilteredElementCollector(doc)\
@@ -41,11 +37,7 @@ def main():
 
 
 if __name__ == "__main__":
-    start = time.clock()
     main()
-    runtime = time.clock() - start
-    print("Runtime = {0} s".format(runtime))
-
     #revit python shell has a console, access it like so
     #__window__.Hide()
     #__window__.Close()
