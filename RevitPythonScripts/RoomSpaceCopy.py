@@ -5,6 +5,10 @@ import clr
 clr.AddReference('RevitAPI')
 clr.AddReference('RevitAPIUI')
 import Autodesk.Revit.DB as db
+clr.AddReference("System.Windows.Forms")
+clr.AddReference("System.Drawing")
+import System.Windows.Forms as swf
+import System.Drawing as sd
 
 
 def main():
@@ -16,7 +20,7 @@ def main():
     uidoc = __revit__.ActiveUIDocument
     view = doc.ActiveView
 
-    print("Running RoomSpaceCopy script copying linked Rooms to Spaces...")
+    print("Running RoomSpaceCopy script copying linked Rooms to Spaces..")
 
     # Get all links in the revit model
     linked_docs = []
@@ -31,6 +35,9 @@ def main():
     #     print("{0}: {1}".format(item.Title, item.PathName))
 
     # TODO: implement user selection of the document
+    select_form = LinkSelectionForm(links=linked_docs)
+    select_form.ShowDialog()
+
     # Select the link to copy rooms from
     link = linked_docs[0]
     print("Selected Link: {}".format(link.Title))
@@ -68,7 +75,7 @@ def main():
     print("Found {0} levels in the model.".format(len(levels)))
 
     # Create Spaces for all placed Rooms in the selected link
-    print("Creating spaces for placed rooms in the selected link...")
+    print("Creating spaces for placed rooms in the selected link..")
     transaction = db.Transaction(doc)
     transaction.Start("RoomSpaceCopy.py")
     try:
@@ -103,6 +110,61 @@ def find_closest_level(levels, elevation):
             closest = level
             difference = level_difference
     return closest
+
+
+class LinkSelectionForm(swf.Form):
+    """Link selection form."""
+
+    def __init__(self, links):
+        """Initializer."""
+        cmb_selection = swf.ComboBox()
+        btn_select = swf.Button()
+        btn_cancel = swf.Button()
+        lbl_instruction = swf.Label()
+        self.SuspendLayout()
+        # Instruction label
+        lbl_instruction.AutoSize = True
+        lbl_instruction.Enabled = False
+        lbl_instruction.Location = sd.Point(12, 10)
+        lbl_instruction.Name = "LblInstruction"
+        lbl_instruction.Size = sd.Size(229, 13)
+        lbl_instruction.TabIndex = 3
+        lbl_instruction.Text = "Select a linked model to use for copying rooms."
+        # Selection combo box
+        cmb_selection.FormattingEnabled = True
+        cmb_selection.Location = sd.Point(12, 40)
+        cmb_selection.Name = "CmbSelection"
+        cmb_selection.Size = sd.Size(260, 21)
+        cmb_selection.TabIndex = 0
+        # Select button
+        btn_select.Location = sd.Point(110, 80)
+        btn_select.Name = "BtnSelect"
+        btn_select.Size = sd.Size(75, 23)
+        btn_select.TabIndex = 1
+        btn_select.Text = "Select"
+        btn_select.UseVisualStyleBackColor = True
+        # Cancel button
+        btn_cancel.DialogResult = swf.DialogResult.Cancel
+        btn_cancel.Location = sd.Point(200, 80)
+        btn_cancel.Name = "BtnCancel"
+        btn_cancel.Size = sd.Size(75, 23)
+        btn_cancel.TabIndex = 2
+        btn_cancel.Text = "Cancel"
+        btn_cancel.UseVisualStyleBackColor = True
+        # Form
+        self.AcceptButton = btn_select
+        self.AutoScaleDimensions = sd.SizeF(6, 13)
+        self.AutoScaleMode = swf.AutoScaleMode.Font
+        self.CancelButton = btn_cancel
+        self.ClientSize = sd.Size(284, 111)
+        self.Controls.Add(lbl_instruction)
+        self.Controls.Add(btn_cancel)
+        self.Controls.Add(btn_select)
+        self.Controls.Add(cmb_selection)
+        self.Name = "Form1"
+        self.Text = "Select Link"
+        self.ResumeLayout(False)
+        self.PerformLayout()
 
 
 if __name__ == "__main__":
