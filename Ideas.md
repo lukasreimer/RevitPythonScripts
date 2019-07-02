@@ -32,6 +32,7 @@ This is a list of possible scripts that could be researched or implemented.
 
 ## Tagging
 - Automatic Tagging / Tag Placement
+  - Riser Tagging 🗲
 - Tag Alignment
 
 ## ...
