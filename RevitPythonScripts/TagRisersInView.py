@@ -1,29 +1,19 @@
-"""Module Docstring.
+"""Tag vertical risers in current view."""
 
-This is a concise description of the script.
-"""
-# standard library imports
 import clr
-# third party imports
 clr.AddReference('RevitAPI')
 clr.AddReference('RevitAPIUI')
 import Autodesk.Revit.DB as db
 import Autodesk.Revit.UI as ui
-# local imports
-# ...
 
-# Main Script
+
 def main():
-    """Function Docstring.
+    """Main Script
 
-    This is a description of the main function containing the business logic.
-
-    Args:
-        ...
-
-    Returns:
-        None: implicityly.
+    This script is tagging all vertical pipe risers in the current view.
     """
+    print("Running TagRisersInView.py script...")
+
     # important revit python shell variables
     app = __revit__.Application
     doc = __revit__.ActiveUIDocument.Document
