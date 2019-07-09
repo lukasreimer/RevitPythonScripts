@@ -14,14 +14,13 @@ def main():
     """
     print("Running TagRisersInView.py script...")
 
-    # important revit python shell variables
+    # STEP 0: Setup
     app = __revit__.Application
     doc = __revit__.ActiveUIDocument.Document
     uidoc = __revit__.ActiveUIDocument
     view = doc.ActiveView
 
-    # main script
-    #TODO: get all vertical pipes in the view
+    # STEP 1: Get all vertical pipes in the view
     pipes = db.FilteredElementCollector(doc, view.Id)\
               .OfCategory(db.BuiltInCategory.OST_PipeCurves)\
               .ToElements()
@@ -29,15 +28,18 @@ def main():
     vertical_pipes = [pipe for pipe in pipes if is_vertical(pipe)]
     print(len(vertical_pipes), vertical_pipes)
 
-    #TODO: filter all pipe crossing upper and lower view range boundary
+    # STEP 2: Filter all pipes crossing upper and lower view range boundary
     top, bottom = top_and_bottom_elevation(doc, view)
     print(top, bottom)
 
-    upper_pipes = []
-    lower_pipes = []
-    both_pipes =[]
+    upper_pipes = [pipe for pipe in vertical_pipes if cuts_top_only(pipe, top, bottom)]
+    lower_pipes = [pipe for pipe in vertical_pipes if cuts_bottom_only(pipe, top, bottom)]
+    both_pipes =[pipe for pipe in vertical_pipes if cuts_top_and_bottom(pipe, top, bottom)]
+    print(len(upper_pipes), upper_pipes)
+    print(len(lower_pipes), lower_pipes)
+    print(len(both_pipes), both_pipes)
 
-    #TODO: place tags at the pipes
+    #TODO: STEP 3: Place tags at the pipes
     # doc.NewTag(
     #     View view,
     #     Element elem,
@@ -52,7 +54,8 @@ def main():
 def is_vertical(pipe, tolerance=1.0e-6):
     """Check if a pipe is vertical."""
     curve = pipe.Location.Curve
-    start, end = curve.GetEndPoint(0), curve.GetEndPoint(1)
+    start = curve.GetEndPoint(0)
+    end = curve.GetEndPoint(1)
     dz = abs(start.Z - end.Z)
     if dz > tolerance:
         dx = abs(start.X - end.X)
@@ -77,22 +80,44 @@ def top_and_bottom_elevation(doc, view):
     # calculate clip plane elevations
     top_elevation = top_level.Elevation + top_offset
     bottom_elevation = bottom_level.Elevation + bottom_offset
+    assert top_elevation >= bottom_elevation
     return top_elevation, bottom_elevation
 
 
 def cuts_top_only(pipe, top, bottom):
-    """."""
-    pass
+    """Checks if the pipe only intersects the top elevation."""
+    curve = pipe.Location.Curve
+    start = curve.GetEndPoint(0)
+    end = curve.GetEndPoint(1)
+    high = max(start.Z, end.Z)
+    low = min(start.Z, end.Z)
+    if high >= top and top >= low >= bottom:
+        return True
+    return False
 
 
 def cuts_bottom_only(pipe, top, bottom):
-    """."""
-    pass
+    """Checks if the pipe only intersects the botom elevation."""
+    curve = pipe.Location.Curve
+    start = curve.GetEndPoint(0)
+    end = curve.GetEndPoint(1)
+    high = max(start.Z, end.Z)
+    low = min(start.Z, end.Z)
+    if low <= bottom and bottom <= high <= top:
+        return True
+    return False
 
 
 def cuts_top_and_bottom(pipe, top, bottom):
-    """."""
-    pass
+    """Checks if the pipe intersects both elevations."""
+    curve = pipe.Location.Curve
+    start = curve.GetEndPoint(0)
+    end = curve.GetEndPoint(1)
+    high = max(start.Z, end.Z)
+    low = min(start.Z, end.Z)
+    if high >= top and bottom >= low:
+        return True
+    return False
 
 
 if __name__ == "__main__":
