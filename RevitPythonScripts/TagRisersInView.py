@@ -24,30 +24,62 @@ def main():
     pipes = db.FilteredElementCollector(doc, view.Id)\
               .OfCategory(db.BuiltInCategory.OST_PipeCurves)\
               .ToElements()
-    print(len(pipes), pipes)
+    print("Found {num} pipes in the currently active view.".format(num=len(pipes)))
+    # print(pipes)
     vertical_pipes = [pipe for pipe in pipes if is_vertical(pipe)]
-    print(len(vertical_pipes), vertical_pipes)
+    print("Found {num} vertical pipes in the view.".format(num=len(vertical_pipes)))
+    # print(vertical_pipes)
 
     # STEP 2: Filter all pipes crossing upper and lower view range boundary
     top, bottom = top_and_bottom_elevation(doc, view)
-    print(top, bottom)
+    print("Top boundary elevation is {0} ft".format(top))
+    print("Bottom boundary elevation is {0} ft".format(bottom))
 
     upper_pipes = [pipe for pipe in vertical_pipes if cuts_top_only(pipe, top, bottom)]
     lower_pipes = [pipe for pipe in vertical_pipes if cuts_bottom_only(pipe, top, bottom)]
     both_pipes =[pipe for pipe in vertical_pipes if cuts_top_and_bottom(pipe, top, bottom)]
-    print(len(upper_pipes), upper_pipes)
-    print(len(lower_pipes), lower_pipes)
-    print(len(both_pipes), both_pipes)
+    print("Found {num} pipes crossing upper boundary only.".format(num=len(upper_pipes)))
+    # print(upper_pipes)
+    print("Found {num} pipes crossing lower boundary only.".format(num=len(lower_pipes)))
+    # print(lower_pipes)
+    print("Found {num} pipes crossing both boundaries.".format(num=len(both_pipes)))
+    # print(both_pipes)
+
+    #TODO: extract list of valid pipe tag ids
+    print("Querying pipe tags...")
+    transaction = db.Transaction(doc)
+    transaction.Start("TagRisersInView.py - Query pipe tags")
+    try:
+        some_pipe = pipes[0]
+        some_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(some_pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, db.XYZ(0, 0, 0))
+        valid_type_ids = some_tag.GetValidTypes()
+        print(valid_type_ids)
+        valid_types = [doc.GetElement(valid_type_id).FamilyName for valid_type_id in valid_type_ids]
+        print(valid_types)
+    except Exception as ex:
+        print("Exception:\n {0}".format(ex))
+        transaction.RollBack()
+    else:
+        transaction.Commit()
+        print("Done.")
+
 
     #TODO: STEP 3: Place tags at the pipes
-    # doc.NewTag(
-    #     View view,
-    #     Element elem,
-    #     Bool leader?,
-    #     TagMode mode,
-    #     TagOrientation orientation,
-    #     XYZpoint
-    # )
+    print("Crating tags...")
+    transaction = db.Transaction(doc)
+    transaction.Start("TagRisersInView.py - Create pipe tags")
+    try:
+        for pipe in upper_pipes:
+            point = pipe_location(pipe, top)
+            new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
+            #print(new_tag)
+            new_tag.ChangeTypeId(valid_type_ids[0])
+    except Exception as ex:
+        print("Exception:\n {0}".format(ex))
+        transaction.RollBack()
+    else:
+        transaction.Commit()
+        print("Done.")
 
 
 # Helpers:
@@ -118,6 +150,15 @@ def cuts_top_and_bottom(pipe, top, bottom):
     if high >= top and bottom >= low:
         return True
     return False
+
+
+def pipe_location(pipe, elevation):
+    """Returns the intersetion point of the pipe with the elevation."""
+    curve = pipe.Location.Curve
+    pipe_point = curve.GetEndPoint(0)
+    point = db.XYZ(pipe_point.X, pipe_point.Y, elevation)
+    print("pipe location = {}".format(point))
+    return point
 
 
 if __name__ == "__main__":
