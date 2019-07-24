@@ -17,6 +17,7 @@ def main():
     element_ids = selection.GetElementIds()
     
     # STEP 2: Filter Selection
+    # TODO: check if a FilteredElementCollector would also do the job
     ducts = []
     for element_id in element_ids:
     	element = doc.GetElement(element_id)
@@ -24,6 +25,7 @@ def main():
     		ducts.append(element)
     
     # STEP 3: Aggregate data
+    # TODO: check if querying the length through the Location.Curve.Length also does the job
     total_length_m = 0
     for duct in ducts:
     	parameter = duct.get_Parameter(db.BuiltInParameter.CURVE_ELEM_LENGTH)
@@ -39,6 +41,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
     __window__.Hide()
+    main()
     __window__.Close()
