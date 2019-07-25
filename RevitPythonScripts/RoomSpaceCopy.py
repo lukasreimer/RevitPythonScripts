@@ -112,6 +112,7 @@ def find_closest_level(levels, elevation):
     return closest
 
 
+# TODO: implement functionality
 class LinkSelectionForm(swf.Form):
     """Link selection form."""
 
@@ -168,7 +169,6 @@ class LinkSelectionForm(swf.Form):
 
 
 if __name__ == "__main__":
-    main()
-    #revit python shell has a console, access it like so
     #__window__.Hide()
+    main()
     #__window__.Close()

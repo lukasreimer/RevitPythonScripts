@@ -5,6 +5,10 @@ clr.AddReference('RevitAPI')
 clr.AddReference('RevitAPIUI')
 import Autodesk.Revit.DB as db
 import Autodesk.Revit.UI as ui
+clr.AddReference("System.Windows.Forms")
+clr.AddReference("System.Drawing")
+import System.Windows.Forms as swf
+import System.Drawing as sd
 
 
 def main():
@@ -58,6 +62,8 @@ def main():
         print("#{tag_id} = {f_name} - {t_name}".format(tag_id=tag_id, f_name=tag_family_name, t_name=tag_type_name))
 
     #TODO STEP 4: Get user selection for pipe riser tags to be applied
+    select_form = TagSelectionForm(tags=tag_types)
+    select_form.ShowDialog()
 
 
     #TODO: STEP 5: Place tags at the pipes
@@ -161,8 +167,100 @@ def pipe_location(pipe, elevation):
     return point
 
 
+# TODO: implement functionality
+class TagSelectionForm(swf.Form):
+    """Link selection form."""
+
+    def __init__(self, tags):
+        """Initializer."""
+        label1 = swf.Label()
+        label2 = swf.Label()
+        label3 = swf.Label()
+        comboBox1 = swf.ComboBox()
+        comboBox2 = swf.ComboBox()
+        comboBox3 = swf.ComboBox()
+        button1 = swf.Button()
+        button2 = swf.Button()
+        self.SuspendLayout()
+        # label1
+        label1.AutoSize = True
+        label1.Location = sd.Point(12, 15)
+        label1.Name = "label1"
+        label1.Size = sd.Size(67, 13)
+        label1.TabIndex = 2
+        label1.Text = "Top pipe tag"
+        # label2
+        label2.AutoSize = True
+        label2.Location = sd.Point(12, 42)
+        label2.Name = "label2"
+        label2.Size = sd.Size(81, 13)
+        label2.TabIndex = 4
+        label2.Text = "Bottom pipe tag"
+        # label3
+        label3.AutoSize = True
+        label3.Location = sd.Point(12, 69)
+        label3.Name = "label3"
+        label3.Size = sd.Size(70, 13)
+        label3.TabIndex = 6
+        label3.Text = "Both pipe tag"
+        # comboBox1
+        comboBox1.FormattingEnabled = True
+        comboBox1.Location = sd.Point(105, 12)
+        comboBox1.Name = "comboBox1"
+        comboBox1.Size = sd.Size(250, 21)
+        comboBox1.TabIndex = 3
+        # comboBox2
+        comboBox2.FormattingEnabled = True
+        comboBox2.Location = sd.Point(105, 39)
+        comboBox2.Name = "comboBox2"
+        comboBox2.Size = sd.Size(250, 21)
+        comboBox2.TabIndex = 5
+        # comboBox3
+        comboBox3.DropDownWidth = 250
+        comboBox3.FormattingEnabled = True
+        comboBox3.Location = sd.Point(105, 66)
+        comboBox3.Name = "comboBox3"
+        comboBox3.Size = sd.Size(250, 21)
+        comboBox3.TabIndex = 7
+        
+        # button1
+        button1.Location = sd.Point(181, 109)
+        button1.Name = "button1"
+        button1.Size = sd.Size(84, 26)
+        button1.TabIndex = 0
+        button1.Text = "OK"
+        button1.UseVisualStyleBackColor = True
+        # button2
+        button2.Location = sd.Point(271, 109)
+        button2.Name = "button2"
+        button2.Size = sd.Size(84, 26)
+        button2.TabIndex = 1
+        button2.Text = "Cancel"
+        button2.UseVisualStyleBackColor = True
+        # Form1
+        self.AcceptButton = button1
+        self.CancelButton = button2
+        self.AutoScaleDimensions = sd.SizeF(6, 13)
+        self.AutoScaleMode = swf.AutoScaleMode.Font
+        #self.AutoSize = True
+        #self.AutoSizeMode = swf.AutoSizeMode.GrowAndShrink
+        self.ClientSize = sd.Size(365, 147)
+        self.Controls.Add(comboBox3)
+        self.Controls.Add(label3)
+        self.Controls.Add(comboBox2)
+        self.Controls.Add(label2)
+        self.Controls.Add(comboBox1)
+        self.Controls.Add(label1)
+        self.Controls.Add(button2)
+        self.Controls.Add(button1)
+        self.Name = "Form1"
+        self.StartPosition = swf.FormStartPosition.CenterParent
+        self.Text = "Form1"
+        self.ResumeLayout(False)
+        self.PerformLayout()
+
+
 if __name__ == "__main__":
-    main()
-    # revit python shell console management
     # __window__.Hide()
+    main() 
     # __window__.Close()
