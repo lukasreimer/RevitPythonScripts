@@ -45,17 +45,22 @@ def main():
     print("Found {num} pipes crossing both boundaries.".format(num=len(both_pipes)))
     # print(both_pipes)
 
-    #TODO: extract list of valid pipe tag ids
+    # STEP 3: Get all available pipe tags in the project
     tag_types = db.FilteredElementCollector(doc)\
                   .OfCategory(db.BuiltInCategory.OST_PipeTags)\
                   .WhereElementIsElementType()\
                   .ToElements()
     print(tag_types)
     for tag_type in tag_types:
-        print(tag_type.FamilyName)
+        tag_id = tag_type.Id
+        tag_family_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_FAMILY_NAME_PARAM).AsString()
+        tag_type_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_NAME_PARAM).AsString()
+        print("#{tag_id} = {f_name} - {t_name}".format(tag_id=tag_id, f_name=tag_family_name, t_name=tag_type_name))
+
+    #TODO STEP 4: Get user selection for pipe riser tags to be applied
 
 
-    #TODO: STEP 3: Place tags at the pipes
+    #TODO: STEP 5: Place tags at the pipes
     print("Crating tags...")
     transaction = db.Transaction(doc)
     transaction.Start("TagRisersInView.py")
@@ -64,7 +69,11 @@ def main():
             point = pipe_location(pipe, top)
             new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
             #print(new_tag)
-            # new_tag.ChangeTypeId(valid_type_ids[0])
+            # new_tag.ChangeTypeId(db.ElementId(1096070))  # TODO: get id from user selection
+        for pipe in lower_pipes:
+            pass  # TODO implement as above
+        for pipe in both_pipes:
+            pass  # TODO implement as above
     except Exception as ex:
         print("Exception:\n {0}".format(ex))
         transaction.RollBack()
