@@ -46,34 +46,25 @@ def main():
     # print(both_pipes)
 
     #TODO: extract list of valid pipe tag ids
-    print("Querying pipe tags...")
-    transaction = db.Transaction(doc)
-    transaction.Start("TagRisersInView.py - Query pipe tags")
-    try:
-        some_pipe = pipes[0]
-        some_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(some_pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, db.XYZ(0, 0, 0))
-        valid_type_ids = some_tag.GetValidTypes()
-        print(valid_type_ids)
-        valid_types = [doc.GetElement(valid_type_id).FamilyName for valid_type_id in valid_type_ids]
-        print(valid_types)
-    except Exception as ex:
-        print("Exception:\n {0}".format(ex))
-        transaction.RollBack()
-    else:
-        transaction.Commit()
-        print("Done.")
+    tag_types = db.FilteredElementCollector(doc)\
+                  .OfCategory(db.BuiltInCategory.OST_PipeTags)\
+                  .WhereElementIsElementType()\
+                  .ToElements()
+    print(tag_types)
+    for tag_type in tag_types:
+        print(tag_type.FamilyName)
 
 
     #TODO: STEP 3: Place tags at the pipes
     print("Crating tags...")
     transaction = db.Transaction(doc)
-    transaction.Start("TagRisersInView.py - Create pipe tags")
+    transaction.Start("TagRisersInView.py")
     try:
         for pipe in upper_pipes:
             point = pipe_location(pipe, top)
             new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
             #print(new_tag)
-            new_tag.ChangeTypeId(valid_type_ids[0])
+            # new_tag.ChangeTypeId(valid_type_ids[0])
     except Exception as ex:
         print("Exception:\n {0}".format(ex))
         transaction.RollBack()
