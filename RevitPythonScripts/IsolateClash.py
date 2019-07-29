@@ -26,6 +26,10 @@ def main():
     uidoc = __revit__.ActiveUIDocument
     view = doc.ActiveView
 
+    # TODO: ask user for clash report html file
+    # TODO: parse clash report html file
+    # TODO: ask user for desired action to be taken (mark all clashing elements/mark individual clash/...)
+
     # STEP 1: Get the clashing elements (ids)
     elem_id_a = db.ElementId(ID_A)
     elem_a = doc.GetElement(elem_id_a)
