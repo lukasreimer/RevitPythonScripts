@@ -40,6 +40,8 @@ status: still checking possibilities with available tools (Navisworks, ..?.. )
 
 ## Clash Detection / Reporting
 - Show Isolate Clashes From Interference Check Report
+  - Show/Isolate single clash
+  - Show Isolate all clashing elements
 
 ## ...
 - ...
