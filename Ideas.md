@@ -10,9 +10,9 @@ status: still checking possibilities with available tools (Navisworks, ..?.. )
   
 
 ## Rooms and Spaces
-- Create Spaces from architecture Rooms
+- Create Spaces from architecture Rooms ✓
   - There is already a workflow for this in RF tools > Project Setup 
-- Link Spaces to Rooms and move parameter date to Spaces
+- Link Spaces to Rooms and move parameter data to Spaces
 - Keep track of Space/Room connections and changes
 
 ## Insulation
@@ -37,6 +37,9 @@ status: still checking possibilities with available tools (Navisworks, ..?.. )
 - Automatic Tagging / Tag Placement
   - Riser Tagging 🗲
 - Tag Alignment
+
+## Clash Detection / Reporting
+- Show Isolate Clashes From Interference Check Report
 
 ## ...
 - ...
