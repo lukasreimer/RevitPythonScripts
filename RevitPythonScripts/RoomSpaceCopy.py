@@ -13,14 +13,13 @@ import System.Drawing as sd
 
 def main():
     """Main Script."""
+    print("Running RoomSpaceCopy script copying linked Rooms to Spaces..")
 
     #important vars, revit python shell version
     app = __revit__.Application
     doc = __revit__.ActiveUIDocument.Document
     uidoc = __revit__.ActiveUIDocument
     view = doc.ActiveView
-
-    print("Running RoomSpaceCopy script copying linked Rooms to Spaces..")
 
     # Get all links in the revit model
     linked_docs = []

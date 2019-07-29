@@ -35,7 +35,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-    # revit python shell console management
     # __window__.Hide()
+    main()
     # __window__.Close()
