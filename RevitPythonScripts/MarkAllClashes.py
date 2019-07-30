@@ -1,6 +1,6 @@
-"""Isolate Clash in View Script.
+"""Mark all clashes in current view script.
 
-This script isolates a clash in the current 3D view.
+This script marks all clashes from a interference report in the current 3D view.
 """
 from HTMLParser import HTMLParser
 import clr
@@ -15,8 +15,6 @@ import System.Drawing as sd
 
 __name = "IsolateClash.py"
 __version = "0.1a"
-
-THRESHOLD = 10  # ft
 
 
 def main():
@@ -54,13 +52,12 @@ def main():
     print(clashing_ids)
     print(len(clashing_ids))
 
-    # TODO: Ask user which clash to isolate
-    first_clash = parser.clashes[1]
+    # TODO: mark all clashing elements in the view
     # STEP 1: Get the clashing elements (ids)
-    elem_id_a = db.ElementId(first_clash[0])
+    elem_id_a = db.ElementId(ID_A)
     elem_a = doc.GetElement(elem_id_a)
     print(elem_a)
-    elem_id_b = db.ElementId(first_clash[1])
+    elem_id_b = db.ElementId(ID_B)
     elem_b = doc.GetElement(elem_id_b)
     print(elem_b)
 
