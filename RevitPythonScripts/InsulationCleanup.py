@@ -43,8 +43,8 @@ def main():
     dialog.FooterText = "<a href=\"http://www.google.de\">Ask Google</a>"
     dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink1, "Write Report")
     dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink2, "Clean Insulation")
-    dialog.CommonButtons = ui.TaskDialogCommonButtons.Close;
-    dialog.DefaultButton = ui.TaskDialogResult.Close;
+    dialog.CommonButtons = ui.TaskDialogCommonButtons.Close
+    dialog.DefaultButton = ui.TaskDialogResult.Close
     result = dialog.Show()
 
     # STEP 3: Write report or clean up insulation
