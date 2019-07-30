@@ -1,13 +1,19 @@
+"""."""
+
+import math
+import collections
 import clr
 clr.AddReference("RevitAPI")
 import Autodesk.Revit.DB as db
-import math
-import collections
+
+__name = "SmokeExtractAirflows.py"
+__version = "0.1a"
 
 
 def main():
 	"""Main script."""
-	print("Running SmokeExtractAirflows.py script...")
+	
+	print("Running {fname} version {ver}...".format(fname=__name, ver=__version))
 
 	# Step 0: Setup
 	normal_airflow_m3hm2 = 25.0  # m³/(h*m²)
@@ -54,7 +60,7 @@ def main():
 	# Step 3: Set Smoke Extract Airflows
 	print("Setting Smoke Extract Ariflows on Spaces...")
 	transaction = db.Transaction(doc)
-	transaction.Start("SmokeExtractAirflows.py")
+	transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
 	try:
 		for space, airflow in space_airflows:
 			airflow_param = space.get_Parameter(
@@ -70,7 +76,6 @@ def main():
 
 
 # Helpers:
-
 SpaceAirflowPair = collections.namedtuple(
 	"SpaceAirflowPair", ["space", "airflow"])
 
@@ -116,4 +121,6 @@ def to_cubic_feet_per_second(cubic_meters_per_hour):
 
 
 if __name__ == "__main__":
-	main()
+	# __window__.Hide()
+    main()
+    # __window__.Close()

@@ -1,7 +1,5 @@
-"""Mark all clashes in current view script.
+"""Mark all clashes from an interference report in current view."""
 
-This script marks all clashes from a interference report in the current 3D view.
-"""
 from HTMLParser import HTMLParser
 import clr
 clr.AddReference('RevitAPI')
@@ -11,7 +9,7 @@ import Autodesk.Revit.UI as ui
 clr.AddReference("System.Windows.Forms")
 import System.Windows.Forms as swf
 
-__name = "IsolateClash.py"
+__name = "MarkAllClashes.py"
 __version = "0.1a"
 
 CLASH_COLOR = db.Color(255, 0, 0)
@@ -25,6 +23,7 @@ FADED_TRANSPARENCY = 50
 
 def main():
     """Main Function."""
+    
     print("Running {fname} version {ver}...".format(fname=__name, ver=__version))
 
     # STEP 0: Setup

@@ -10,13 +10,17 @@ clr.AddReference("System.Drawing")
 import System.Windows.Forms as swf
 import System.Drawing as sd
 
+__name = "TagRisersInView.py"
+__version = "0.1a"
+
 
 def main():
     """Main Script
 
     This script is tagging all vertical pipe risers in the current view.
     """
-    print("Running TagRisersInView.py script...")
+    
+    print("Running {fname} version {ver}...".format(fname=__name, ver=__version))
 
     # STEP 0: Setup
     app = __revit__.Application
@@ -69,7 +73,7 @@ def main():
     #TODO: STEP 5: Place tags at the pipes
     print("Crating tags...")
     transaction = db.Transaction(doc)
-    transaction.Start("TagRisersInView.py")
+    transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
     try:
         for pipe in upper_pipes:
             point = pipe_location(pipe, top)

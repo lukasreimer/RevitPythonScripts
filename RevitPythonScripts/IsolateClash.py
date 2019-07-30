@@ -1,7 +1,5 @@
-"""Isolate Clash in View Script.
+"""Isolate clash in current view."""
 
-This script isolates a clash in the current 3D view.
-"""
 from HTMLParser import HTMLParser
 import clr
 clr.AddReference('RevitAPI')
@@ -98,7 +96,7 @@ def main():
 
     # STEP 4: Isolate elements in current view
     transaction = db.Transaction(doc)
-    transaction.Start("IsolateClash.py")
+    transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
     try:
         view.IsolateElementsTemporary(selection)
         for elem_id in selection:
@@ -111,7 +109,6 @@ def main():
     else:
         transaction.Commit()
         print("Done.")
-
 
 
 class InterferenceReportParser(HTMLParser):

@@ -1,15 +1,17 @@
-"""Transfer Parameter Data from linked Rooms to Spaces."""
+"""Transfer parameter data from linked rooms to spaces."""
 
 import clr
 clr.AddReference('RevitAPI') 
 clr.AddReference('RevitAPIUI') 
 import Autodesk.Revit.DB as db
 
+__name = "RoomSpaceTransfer.py"
+__version = "0.1a"
 
 def main():
     """Main Script."""
 
-    print("Transferring Parameter Data from Rooms to Spaces...")
+    print("Running {fname} version {ver}...".format(fname=__name, ver=__version))
 
     # important revit python shell variables
     app = __revit__.Application
@@ -26,7 +28,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-    # revit python shell console management
     # __window__.Hide()
+    main()
     # __window__.Close()

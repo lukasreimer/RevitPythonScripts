@@ -1,13 +1,21 @@
+"""Calculate and display the total length of the currently selected ducts."""
+
 import clr
 clr.AddReference('RevitAPI')
 clr.AddReference('RevitAPIUI')
 import Autodesk.Revit.DB as db
 import Autodesk.Revit.UI as ui
 
+__name = "DuctLength.py"
+__version = "0.1a"
+
 FEET_2_METER = 0.3048
 
 def main():
     """Main Function."""
+    
+    print("Running {name} version {ver}".format(name=__name, ver=__version))
+
     # STEP 0: Setup
     doc = __revit__.ActiveUIDocument.Document
     uidoc = __revit__.ActiveUIDocument

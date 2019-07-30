@@ -10,10 +10,14 @@ clr.AddReference("System.Drawing")
 import System.Windows.Forms as swf
 import System.Drawing as sd
 
+__name = "RoomSpaceCopy.py"
+__version = "0.1a"
+
 
 def main():
     """Main Script."""
-    print("Running RoomSpaceCopy script copying linked Rooms to Spaces..")
+
+    print("Running {fname} version {ver}...".format(fname=__name, ver=__version))
 
     #important vars, revit python shell version
     app = __revit__.Application
@@ -76,7 +80,7 @@ def main():
     # Create Spaces for all placed Rooms in the selected link
     print("Creating spaces for placed rooms in the selected link..")
     transaction = db.Transaction(doc)
-    transaction.Start("RoomSpaceCopy.py")
+    transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
     try:
         created_spaces = []
         for room in rooms:

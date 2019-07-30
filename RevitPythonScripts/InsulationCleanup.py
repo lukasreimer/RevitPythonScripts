@@ -13,11 +13,14 @@ import Autodesk.Revit.UI as ui
 clr.AddReference("System.Windows.Forms")
 import System.Windows.Forms as swf
 
+__name = "InsulationCleanup.py"
+__version = "0.1a"
+
 
 def main():
     """Main Script."""
 
-    print("Running InsulationCleanup.py script...")
+    print("Running {name} version {ver}".format(name=__name, ver=__version))
 
     # STEP 0: Setup
     doc = __revit__.ActiveUIDocument.Document
@@ -40,7 +43,6 @@ def main():
     dialog = ui.TaskDialog(title="Insulation Cleanup")
     dialog.MainInstruction = "Insulation Cleanup Summary"
     dialog.MainContent = summary_text
-    dialog.FooterText = "<a href=\"http://www.google.de\">Ask Google</a>"
     dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink1, "Write Report")
     dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink2, "Clean Insulation")
     dialog.CommonButtons = ui.TaskDialogCommonButtons.Close
@@ -66,7 +68,7 @@ def main():
             print("File save dialog canceled.")
     elif result == ui.TaskDialogResult.CommandLink2:  # Clean Insulation
         transaction = db.Transaction(doc)
-        transaction.Start("InsulationCleanup.py")
+        transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
         try:
             print("Cleaning Insulation...")
             for pipe_element in unhosted_pipe:
@@ -167,7 +169,6 @@ def write_report(doc, upipe, rpipe, uduct, rduct):
 
 
 if __name__ == "__main__":
-    main()
-    # revit python shell console management
     # __window__.Hide()
+    main()
     # __window__.Close()

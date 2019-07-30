@@ -1,7 +1,5 @@
-"""Module Docstring.
+"""Module docstring."""
 
-This is a concise description of the script.
-"""
 # standard library imports
 import clr
 # third party imports
@@ -12,25 +10,21 @@ import Autodesk.Revit.UI as ui
 # local imports
 # ...
 
-# Main Script
+__name = "ScriptName.py"
+__version = "0.1"
+
 def main():
-    """Function Docstring.
+    """Main script docstring."""
+    
+    print("Running {name} version {ver}".format(name=__name, ver=__version))
 
-    This is a description of the main function containing the business logic.
-
-    Args:
-        ...
-
-    Returns:
-        None: implicityly.
-    """
-    # important revit python shell variables
+    # Setup
     app = __revit__.Application
     doc = __revit__.ActiveUIDocument.Document
     uidoc = __revit__.ActiveUIDocument
     view = doc.ActiveView
 
-    # main script
+    # Main script
     print("Hello World!")
 
 

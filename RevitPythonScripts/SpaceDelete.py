@@ -2,14 +2,15 @@
 
 import clr
 clr.AddReference('RevitAPI')
-clr.AddReference('RevitAPIUI')
 import Autodesk.Revit.DB as db
 
+__name = "SpaceDelete.py"
+__version = "0.1a"
 
 def main():
     """Main Program."""
 
-    print("Running Space Delete script for deleting Spaces...")
+    print("Running {fname} version {ver}...".format(fname=__name, ver=__version))
     
     # Important Revit variables
     doc = __revit__.ActiveUIDocument.Document
@@ -23,7 +24,7 @@ def main():
     # Delete all Spaces from the model
     print("Deleting spaces...")
     transaction = db.Transaction(doc)
-    transaction.Start("SpaceDelete.py")
+    transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
     try:
         for space in spaces:
             # print("deleting {0}...".format(space.Id))
@@ -37,7 +38,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-    #revit python shell has a console, access it like so
     #__window__.Hide()
+    main()
     #__window__.Close()
