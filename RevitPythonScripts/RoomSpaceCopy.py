@@ -39,7 +39,13 @@ def main():
 
     # TODO: implement user selection of the document
     select_form = LinkSelectionForm(links=linked_docs)
-    select_form.ShowDialog()
+    result = select_form.ShowDialog()
+    print(result)
+    if result == swf.DialogResult.OK:
+        # TODO: get selected  link and carry on
+        pass
+    else:
+        print("No link selected, nothing to do.")
 
     # Select the link to copy rooms from
     link = linked_docs[0]
@@ -120,55 +126,101 @@ class LinkSelectionForm(swf.Form):
     """Link selection form."""
 
     def __init__(self, links):
-        """Initializer."""
-        cmb_selection = swf.ComboBox()
-        btn_select = swf.Button()
-        btn_cancel = swf.Button()
-        lbl_instruction = swf.Label()
+        self.tableLayoutOverall = swf.TableLayoutPanel()
+        self.labelLink = swf.Label()
+        self.comboBoxLink = swf.ComboBox()
+        self.flowLayoutPanelButtons = swf.FlowLayoutPanel()
+        self.buttonSelect = swf.Button()
+        self.buttonCancel = swf.Button()
+        self.tableLayoutOverall.SuspendLayout()
+        self.flowLayoutPanelButtons.SuspendLayout()
         self.SuspendLayout()
-        # Instruction label
-        lbl_instruction.AutoSize = True
-        lbl_instruction.Enabled = False
-        lbl_instruction.Location = sd.Point(12, 10)
-        lbl_instruction.Name = "LblInstruction"
-        lbl_instruction.Size = sd.Size(229, 13)
-        lbl_instruction.TabIndex = 3
-        lbl_instruction.Text = "Select a linked model to use for copying rooms."
-        # Selection combo box
-        cmb_selection.FormattingEnabled = True
-        cmb_selection.Location = sd.Point(12, 40)
-        cmb_selection.Name = "CmbSelection"
-        cmb_selection.Size = sd.Size(260, 21)
-        cmb_selection.TabIndex = 0
-        # Select button
-        btn_select.Location = sd.Point(110, 80)
-        btn_select.Name = "BtnSelect"
-        btn_select.Size = sd.Size(75, 23)
-        btn_select.TabIndex = 1
-        btn_select.Text = "Select"
-        btn_select.UseVisualStyleBackColor = True
-        # Cancel button
-        btn_cancel.DialogResult = swf.DialogResult.Cancel
-        btn_cancel.Location = sd.Point(200, 80)
-        btn_cancel.Name = "BtnCancel"
-        btn_cancel.Size = sd.Size(75, 23)
-        btn_cancel.TabIndex = 2
-        btn_cancel.Text = "Cancel"
-        btn_cancel.UseVisualStyleBackColor = True
-        # Form
-        self.AcceptButton = btn_select
+        # labelLink
+        self.labelLink.Anchor = swf.AnchorStyles.Right
+        self.labelLink.AutoSize = True
+        self.labelLink.Location = sd.Point(25, 18)
+        self.labelLink.Name = "labelLink"
+        self.labelLink.Size = sd.Size(27, 13)
+        self.labelLink.TabIndex = 0
+        self.labelLink.Text = "Link"
+        # comboBoxLink
+        self.comboBoxLink.Anchor = swf.AnchorStyles.Left | swf.AnchorStyles.Right
+        self.comboBoxLink.FormattingEnabled = True
+        self.comboBoxLink.Location = sd.Point(58, 14)
+        self.comboBoxLink.Name = "comboBoxLink"
+        self.comboBoxLink.Size = sd.Size(258, 21)
+        self.comboBoxLink.TabIndex = 1
+        # buttonSelect
+        self.buttonSelect.Location = sd.Point(149, 3)
+        self.buttonSelect.Name = "buttonSelect"
+        self.buttonSelect.Size = sd.Size(75, 23)
+        self.buttonSelect.TabIndex = 0
+        self.buttonSelect.Text = "Select"
+        self.buttonSelect.UseVisualStyleBackColor = True
+        self.buttonSelect.Click += self.buttonSelect_Click
+        # buttonCancel
+        self.buttonCancel.Anchor = swf.AnchorStyles.None
+        self.buttonCancel.DialogResult = swf.DialogResult.Cancel
+        self.buttonCancel.Location = sd.Point(230, 3)
+        self.buttonCancel.Name = "buttonCancel"
+        self.buttonCancel.Size = sd.Size(75, 23)
+        self.buttonCancel.TabIndex = 1
+        self.buttonCancel.Text = "Cancel"
+        self.buttonCancel.UseVisualStyleBackColor = True
+        # flowLayoutPanelButtons
+        self.flowLayoutPanelButtons.BackColor = sd.SystemColors.Control
+        self.tableLayoutOverall.SetColumnSpan(self.flowLayoutPanelButtons, 2)
+        self.flowLayoutPanelButtons.Controls.Add(self.buttonCancel)
+        self.flowLayoutPanelButtons.Controls.Add(self.buttonSelect)
+        self.flowLayoutPanelButtons.Dock = swf.DockStyle.Fill
+        self.flowLayoutPanelButtons.FlowDirection = swf.FlowDirection.RightToLeft
+        self.flowLayoutPanelButtons.Location = sd.Point(8, 48)
+        self.flowLayoutPanelButtons.Name = "flowLayoutPanelButtons"
+        self.flowLayoutPanelButtons.Size = sd.Size(308, 35)
+        self.flowLayoutPanelButtons.TabIndex = 2
+        # tableLayoutOverall
+        self.tableLayoutOverall.ColumnCount = 2
+        self.tableLayoutOverall.ColumnStyles.Add(swf.ColumnStyle(swf.SizeType.Absolute, 50))
+        self.tableLayoutOverall.ColumnStyles.Add(swf.ColumnStyle())
+        self.tableLayoutOverall.Controls.Add(self.labelLink, 0, 0)
+        self.tableLayoutOverall.Controls.Add(self.comboBoxLink, 1, 0)
+        self.tableLayoutOverall.Controls.Add(self.flowLayoutPanelButtons, 0, 1)
+        self.tableLayoutOverall.Dock = swf.DockStyle.Fill
+        self.tableLayoutOverall.Location = sd.Point(0, 0)
+        self.tableLayoutOverall.Name = "tableLayoutOverall"
+        self.tableLayoutOverall.Padding = swf.Padding(5)
+        self.tableLayoutOverall.RowCount = 2
+        self.tableLayoutOverall.RowStyles.Add(swf.RowStyle(swf.SizeType.Percent, 50))
+        self.tableLayoutOverall.RowStyles.Add(swf.RowStyle(swf.SizeType.Percent, 50))
+        self.tableLayoutOverall.Size = sd.Size(324, 91)
+        self.tableLayoutOverall.TabIndex = 0
+        # RoomSpaceCopyForm
+        self.AcceptButton = self.buttonSelect
         self.AutoScaleDimensions = sd.SizeF(6, 13)
         self.AutoScaleMode = swf.AutoScaleMode.Font
-        self.CancelButton = btn_cancel
-        self.ClientSize = sd.Size(284, 111)
-        self.Controls.Add(lbl_instruction)
-        self.Controls.Add(btn_cancel)
-        self.Controls.Add(btn_select)
-        self.Controls.Add(cmb_selection)
-        self.Name = "Form1"
-        self.Text = "Select Link"
+        self.CancelButton = self.buttonCancel
+        self.ClientSize = sd.Size(324, 91)
+        self.Controls.Add(self.tableLayoutOverall)
+        self.MaximizeBox = False
+        self.MinimizeBox = False
+        self.MinimumSize = sd.Size(340, 130)
+        self.Name = "RoomSpaceCopyForm"
+        self.Text = "RoomSpaceCopyForm"
+        self.tableLayoutOverall.ResumeLayout(False)
+        self.tableLayoutOverall.PerformLayout()
+        self.flowLayoutPanelButtons.ResumeLayout(False)
         self.ResumeLayout(False)
-        self.PerformLayout()
+        # TODO: populate comboBox
+    
+    def buttonSelect_Click(self, sender, args):
+        print("Select clicked!")
+        self.DialogResult = swf.DialogResult.OK
+        self.Close()
+    
+    def buttonCancel_Click(self, sender, args):
+        print("Cancel clicked!")
+        self.DialogResult = swf.DialogResult.Cancel
+        self.Close()
 
 
 if __name__ == "__main__":
