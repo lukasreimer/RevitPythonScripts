@@ -19,7 +19,7 @@ def main():
     spaces = db.FilteredElementCollector(doc)\
             .OfCategory(db.BuiltInCategory.OST_MEPSpaces)\
             .ToElements()
-    print("Found {0} spaces in the model".format(len(spaces)))
+    print("Found {0} spaces in the model.".format(len(spaces)))
 
     # Delete all Spaces from the model
     print("Deleting spaces...")

@@ -19,95 +19,66 @@ def main():
 
     print("Running {fname} version {ver}...".format(fname=__name, ver=__version))
 
-    #important vars, revit python shell version
+    # STEP 0: Setup
     app = __revit__.Application
     doc = __revit__.ActiveUIDocument.Document
     uidoc = __revit__.ActiveUIDocument
     view = doc.ActiveView
 
-    # Get all links in the revit model
-    linked_docs = []
+    # STEP 1: Get all links in the revit model
+    links = {}
     for document in app.Documents:
         if document.IsLinked:
-            linked_docs.append(document)
+            links[document.Title] = document
 
-    # print("Linked Documents:")
-    # print(linked_docs)
-    # for item in linked_docs:
-    #     print(item)
-    #     print("{0}: {1}".format(item.Title, item.PathName))
-
-    # TODO: implement user selection of the document
-    select_form = LinkSelectionForm(links=linked_docs)
+    # STEP 2: Let user select the linked document to copy from
+    select_form = LinkSelectionForm(links=links)
     result = select_form.ShowDialog()
     print(result)
     if result == swf.DialogResult.OK:
-        # TODO: get selected  link and carry on
-        pass
+        selected_link_title = select_form.comboBoxLink.SelectedItem
+        selected_link = links[selected_link_title]
+
+        # STEP 3: Get all Rooms from the selected link
+        rooms = db.FilteredElementCollector(selected_link)\
+                .OfCategory(db.BuiltInCategory.OST_Rooms)\
+                .ToElements()
+        print("Found {0} rooms in the linked document".format(len(rooms)))
+
+        # STEP 4: Get Levels from the current model:
+        levels = db.FilteredElementCollector(doc)\
+                .OfCategory(db.BuiltInCategory.OST_Levels)\
+                .WhereElementIsNotElementType()\
+                .ToElements()
+        print("Found {0} levels in the model.".format(len(levels)))
+
+        # STEP 5: Create spaces for all placed Rooms in the selected link
+        print("Creating spaces for all placed rooms in the selected link...")
+        transaction = db.Transaction(doc)
+        transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
+        try:
+            created_spaces = []
+            for room in rooms:
+                space_level = find_closest_level(levels, room.Level.Elevation)
+                if room.Location:  # room is actually placed
+                    location_point = room.Location.Point
+                    insert_point = db.UV(location_point.X, location_point.Y)
+                    created_space = doc.Create.NewSpace(space_level, insert_point)
+                    created_spaces.append(created_space)
+                    # Save unique ID of source room in space parameter "Comments"
+                    comment_param = created_space.get_Parameter(
+                        db.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+                    comment_param.Set(room.UniqueId)
+            print("Created {0} spaces.".format(len(created_spaces)))
+        except Exception as ex:
+            print("Exception: {0}".format(ex))
+            transaction.RollBack()
+        else:
+            transaction.Commit()
+            print("Done.")
     else:
         print("No link selected, nothing to do.")
 
-    # Select the link to copy rooms from
-    link = linked_docs[0]
-    print("Selected Link: {}".format(link.Title))
-
-    # Get all Rooms from the selected link
-    rooms = db.FilteredElementCollector(link)\
-            .OfCategory(db.BuiltInCategory.OST_Rooms)\
-            .ToElements()
-
-    # print("Linked Rooms:")
-    # for room in rooms:
-    #     print(room)
-    print("Found {0} rooms in the linked document".format(len(rooms)))
-
-    # # Get linked Levels:
-    # linked_levels = db.FilteredElementCollector(link)\
-    #                 .OfCategory(db.BuiltInCategory.OST_Levels)\
-    #                 .WhereElementIsNotElementType()\
-    #                 .ToElements()
-
-    # print("Linked Levels:")
-    # for level in linked_levels:
-    #     print(level, level.Name, level.Elevation)
-    # print("Total = {0} linked levels".format(len(linked_levels)))
-
-    # Get Levels:
-    levels = db.FilteredElementCollector(doc)\
-            .OfCategory(db.BuiltInCategory.OST_Levels)\
-            .WhereElementIsNotElementType()\
-            .ToElements()
-
-    # print("Levels:")
-    # for level in levels:
-    #     print(level, level.Name, level.Elevation)
-    print("Found {0} levels in the model.".format(len(levels)))
-
-    # Create Spaces for all placed Rooms in the selected link
-    print("Creating spaces for placed rooms in the selected link..")
-    transaction = db.Transaction(doc)
-    transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
-    try:
-        created_spaces = []
-        for room in rooms:
-            space_level = find_closest_level(levels, room.Level.Elevation)
-            if room.Location:  # room is actually placed
-                location_point = room.Location.Point
-                insert_point = db.UV(location_point.X, location_point.Y)
-                created_space = doc.Create.NewSpace(space_level, insert_point)
-                created_spaces.append(created_space)
-                # Save unique ID of source room in space parameter "Comments"
-                comment_param = created_space.get_Parameter(
-                    db.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
-                comment_param.Set(room.UniqueId)
-        print("Created {0} spaces.".format(len(created_spaces)))
-
-    except Exception as ex:
-        print("Exception: {0}".format(ex))
-        transaction.RollBack()
-    else:
-        transaction.Commit()
-        print("Done.")
 
 def find_closest_level(levels, elevation):
     """Find the level closest to the given elevation. """
@@ -121,7 +92,6 @@ def find_closest_level(levels, elevation):
     return closest
 
 
-# TODO: implement functionality
 class LinkSelectionForm(swf.Form):
     """Link selection form."""
 
@@ -210,7 +180,11 @@ class LinkSelectionForm(swf.Form):
         self.tableLayoutOverall.PerformLayout()
         self.flowLayoutPanelButtons.ResumeLayout(False)
         self.ResumeLayout(False)
-        # TODO: populate comboBox
+        # Populate comboBox and preselec first item
+        for link_title in links.keys():
+            self.comboBoxLink.Items.Add(link_title)
+        self.comboBoxLink.SelectedIndex = 0
+
     
     def buttonSelect_Click(self, sender, args):
         print("Select clicked!")
