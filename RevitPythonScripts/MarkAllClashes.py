@@ -43,10 +43,10 @@ def main():
         # STEP 2: Parse clash report file
         print("Parsing {fname} ...".format(fname=file_path))
         with open(file_path, mode="rb") as html_file:
-            html = html_file.read()
-            html = unicode(html, "utf-8")
+            html = html_file.read()  # just read the plain bytes
+            uhtml = unicode(html, "utf-16")  # Revit exports html in UTF-16(-LE) encoding
         parser = InterferenceReportParser()
-        parser.feed(html)
+        parser.feed(uhtml)
         parser.close()
         clashes = parser.clashes
         print("Found {num} clashes in the report.".format(num=len(clashes)))
@@ -60,7 +60,7 @@ def main():
         print("Found {num} clashing elements.".format(num=len(clashing_ids)))
         # print(clashing_ids)
 
-        # Get all elements in the view
+        # Get all element ids of the elements in the view
         all_ids = db.FilteredElementCollector(doc, view.Id)\
                     .WhereElementIsNotElementType()\
                     .ToElementIds()
