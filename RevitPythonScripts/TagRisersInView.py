@@ -177,94 +177,143 @@ class TagSelectionForm(swf.Form):
 
     def __init__(self, tags):
         """Initializer."""
-        label1 = swf.Label()
-        label2 = swf.Label()
-        label3 = swf.Label()
-        comboBox1 = swf.ComboBox()
-        comboBox2 = swf.ComboBox()
-        comboBox3 = swf.ComboBox()
-        button1 = swf.Button()
-        button2 = swf.Button()
+        # Instatiate widgets
+        self.tableLayoutPanelOverall = swf.TableLayoutPanel()
+        self.flowLayoutPanelButtons = swf.FlowLayoutPanel()
+        self.labelTopTag = swf.Label()
+        self.labelBottomTag = swf.Label()
+        self.labelBothTag = swf.Label()
+        self.comboBox1 = swf.ComboBox()
+        self.comboBox2 = swf.ComboBox()
+        self.comboBox3 = swf.ComboBox()
+        self.buttonCancel = swf.Button()
+        self.buttonSelect = swf.Button()
+        self.tableLayoutPanelOverall.SuspendLayout()
+        self.flowLayoutPanelButtons.SuspendLayout()
         self.SuspendLayout()
-        # label1
-        label1.AutoSize = True
-        label1.Location = sd.Point(12, 15)
-        label1.Name = "label1"
-        label1.Size = sd.Size(67, 13)
-        label1.TabIndex = 2
-        label1.Text = "Top pipe tag"
-        # label2
-        label2.AutoSize = True
-        label2.Location = sd.Point(12, 42)
-        label2.Name = "label2"
-        label2.Size = sd.Size(81, 13)
-        label2.TabIndex = 4
-        label2.Text = "Bottom pipe tag"
-        # label3
-        label3.AutoSize = True
-        label3.Location = sd.Point(12, 69)
-        label3.Name = "label3"
-        label3.Size = sd.Size(70, 13)
-        label3.TabIndex = 6
-        label3.Text = "Both pipe tag"
+        # Call layout functions
+        self.layout_widgets()
+        self.populate_combo_boxes(tags)
+
+    def layout_widgets(self):
+        """Layout the widgets."""
+        # labelTopTag
+        self.labelTopTag.Name = "labelTopTag"
+        self.labelTopTag.Text = "Top Tag"
+        self.labelTopTag.Anchor = swf.AnchorStyles.Right
+        self.labelTopTag.AutoSize = True
+        self.labelTopTag.Location = sd.Point(54, 13)
+        self.labelTopTag.Size = sd.Size(48, 13)
+        self.labelTopTag.TabIndex = 0
+        # labelBottomTag
+        self.labelBottomTag.Name = "labelBottomTag"
+        self.labelBottomTag.Text = "Bottom Tag"
+        self.labelBottomTag.Anchor = swf.AnchorStyles.Right
+        self.labelBottomTag.AutoSize = True
+        self.labelBottomTag.Location = sd.Point(40, 43)
+        self.labelBottomTag.Size = sd.Size(62, 13)
+        self.labelBottomTag.TabIndex = 1
+        # labelBothTag
+        self.labelBothTag.Name = "labelBothTag"
+        self.labelBothTag.Text = "Both Tag"
+        self.labelBothTag.Anchor = swf.AnchorStyles.Right
+        self.labelBothTag.AutoSize = True
+        self.labelBothTag.Location = sd.Point(51, 73)
+        self.labelBothTag.Size = sd.Size(51, 13)
+        self.labelBothTag.TabIndex = 2
         # comboBox1
-        comboBox1.FormattingEnabled = True
-        comboBox1.Location = sd.Point(105, 12)
-        comboBox1.Name = "comboBox1"
-        comboBox1.Size = sd.Size(250, 21)
-        comboBox1.TabIndex = 3
+        self.comboBox1.Name = "comboBox1"
+        self.comboBox1.Anchor = swf.AnchorStyles.Left | swf.AnchorStyles.Right
+        self.comboBox1.FormattingEnabled = True
+        self.comboBox1.Location = sd.Point(108, 9)
+        self.comboBox1.Size = sd.Size(268, 21)
+        self.comboBox1.TabIndex = 3
         # comboBox2
-        comboBox2.FormattingEnabled = True
-        comboBox2.Location = sd.Point(105, 39)
-        comboBox2.Name = "comboBox2"
-        comboBox2.Size = sd.Size(250, 21)
-        comboBox2.TabIndex = 5
+        self.comboBox2.Name = "comboBox2"
+        self.comboBox2.Anchor = swf.AnchorStyles.Left | swf.AnchorStyles.Right
+        self.comboBox2.FormattingEnabled = True
+        self.comboBox2.Location = sd.Point(108, 39)
+        self.comboBox2.Size = sd.Size(268, 21)
+        self.comboBox2.TabIndex = 4
         # comboBox3
-        comboBox3.DropDownWidth = 250
-        comboBox3.FormattingEnabled = True
-        comboBox3.Location = sd.Point(105, 66)
-        comboBox3.Name = "comboBox3"
-        comboBox3.Size = sd.Size(250, 21)
-        comboBox3.TabIndex = 7
-        
-        # button1
-        button1.Location = sd.Point(181, 109)
-        button1.Name = "button1"
-        button1.Size = sd.Size(84, 26)
-        button1.TabIndex = 0
-        button1.Text = "OK"
-        button1.UseVisualStyleBackColor = True
-        # button2
-        button2.Location = sd.Point(271, 109)
-        button2.Name = "button2"
-        button2.Size = sd.Size(84, 26)
-        button2.TabIndex = 1
-        button2.Text = "Cancel"
-        button2.UseVisualStyleBackColor = True
-        # Form1
-        self.AcceptButton = button1
-        self.CancelButton = button2
+        self.comboBox3.Name = "comboBox3"
+        self.comboBox3.Anchor = swf.AnchorStyles.Left | swf.AnchorStyles.Right
+        self.comboBox3.FormattingEnabled = True
+        self.comboBox3.Location = sd.Point(108, 69)
+        self.comboBox3.Size = sd.Size(268, 21)
+        self.comboBox3.TabIndex = 5
+        # buttonCancel
+        self.buttonCancel.Name = "buttonCancel"
+        self.buttonCancel.Text = "Cancel"
+        self.buttonCancel.DialogResult = swf.DialogResult.Cancel
+        self.buttonCancel.Location = sd.Point(290, 8)
+        self.buttonCancel.Size = sd.Size(75, 23)
+        self.buttonCancel.TabIndex = 0
+        self.buttonCancel.UseVisualStyleBackColor = True
+        # buttonSelect
+        self.buttonSelect.Name = "buttonSelect"
+        self.buttonSelect.Text = "Select"
+        self.buttonSelect.DialogResult = swf.DialogResult.OK
+        self.buttonSelect.Location = sd.Point(209, 8)
+        self.buttonSelect.Size = sd.Size(75, 23)
+        self.buttonSelect.TabIndex = 1
+        self.buttonSelect.UseVisualStyleBackColor = True
+        # self.buttonSelect.Click += self.buttonSelect_Click
+        # flowLayoutPanelButtons
+        self.flowLayoutPanelButtons.Name = "flowLayoutPanelButtons"
+        self.tableLayoutPanelOverall.SetColumnSpan(self.flowLayoutPanelButtons, 2)
+        self.flowLayoutPanelButtons.Controls.Add(self.buttonCancel)
+        self.flowLayoutPanelButtons.Controls.Add(self.buttonSelect)
+        self.flowLayoutPanelButtons.Dock = swf.DockStyle.Fill
+        self.flowLayoutPanelButtons.FlowDirection = swf.FlowDirection.RightToLeft
+        self.flowLayoutPanelButtons.Location = sd.Point(8, 98)
+        self.flowLayoutPanelButtons.Padding = swf.Padding(0, 5, 0, 0)
+        self.flowLayoutPanelButtons.Size = sd.Size(368, 45)
+        self.flowLayoutPanelButtons.TabIndex = 6
+        # tableLayoutPanelOverall
+        self.tableLayoutPanelOverall.Name = "tableLayoutPanelOverall"
+        self.tableLayoutPanelOverall.ColumnCount = 2
+        self.tableLayoutPanelOverall.ColumnStyles.Add(swf.ColumnStyle(swf.SizeType.Absolute, 100))
+        self.tableLayoutPanelOverall.ColumnStyles.Add(swf.ColumnStyle())
+        self.tableLayoutPanelOverall.Controls.Add(self.labelTopTag, 0, 0)
+        self.tableLayoutPanelOverall.Controls.Add(self.labelBottomTag, 0, 1)
+        self.tableLayoutPanelOverall.Controls.Add(self.labelBothTag, 0, 2)
+        self.tableLayoutPanelOverall.Controls.Add(self.comboBox1, 1, 0)
+        self.tableLayoutPanelOverall.Controls.Add(self.comboBox2, 1, 1)
+        self.tableLayoutPanelOverall.Controls.Add(self.comboBox3, 1, 2)
+        self.tableLayoutPanelOverall.Controls.Add(self.flowLayoutPanelButtons, 1, 3)
+        self.tableLayoutPanelOverall.Dock = swf.DockStyle.Fill
+        self.tableLayoutPanelOverall.Location = sd.Point(0, 0)
+        self.tableLayoutPanelOverall.Padding = swf.Padding(5)
+        self.tableLayoutPanelOverall.RowCount = 4
+        self.tableLayoutPanelOverall.RowStyles.Add(swf.RowStyle(swf.SizeType.Absolute, 30))
+        self.tableLayoutPanelOverall.RowStyles.Add(swf.RowStyle(swf.SizeType.Absolute, 30))
+        self.tableLayoutPanelOverall.RowStyles.Add(swf.RowStyle(swf.SizeType.Absolute, 30))
+        self.tableLayoutPanelOverall.RowStyles.Add(swf.RowStyle())
+        self.tableLayoutPanelOverall.Size = sd.Size(384, 151)
+        self.tableLayoutPanelOverall.TabIndex = 0
+        # TagSelectionForm
+        self.Name = "TagSelectionForm"
+        self.Text = "TagRisersInView Form"
+        self.AcceptButton = self.buttonSelect
+        self.CancelButton = self.buttonCancel
         self.AutoScaleDimensions = sd.SizeF(6, 13)
         self.AutoScaleMode = swf.AutoScaleMode.Font
-        #self.AutoSize = True
-        #self.AutoSizeMode = swf.AutoSizeMode.GrowAndShrink
-        self.ClientSize = sd.Size(365, 147)
-        self.Controls.Add(comboBox3)
-        self.Controls.Add(label3)
-        self.Controls.Add(comboBox2)
-        self.Controls.Add(label2)
-        self.Controls.Add(comboBox1)
-        self.Controls.Add(label1)
-        self.Controls.Add(button2)
-        self.Controls.Add(button1)
-        self.Name = "Form1"
-        self.StartPosition = swf.FormStartPosition.CenterParent
-        self.Text = "Form1"
+        self.ClientSize = sd.Size(384, 151)
+        self.Controls.Add(self.tableLayoutPanelOverall)
+        self.KeyPreview = True
+        self.MinimumSize = sd.Size(400, 190)
+        self.tableLayoutPanelOverall.ResumeLayout(False)
+        self.tableLayoutPanelOverall.PerformLayout()
+        self.flowLayoutPanelButtons.ResumeLayout(False)
         self.ResumeLayout(False)
-        self.PerformLayout()
+    
+    def populate_combo_boxes(self, tags):
+        """Populate the combo boxes with tag names."""
+        pass
 
 
 if __name__ == "__main__":
     # __window__.Hide()
-    main() 
+    main()
     # __window__.Close()

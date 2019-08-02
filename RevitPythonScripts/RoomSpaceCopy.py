@@ -121,13 +121,13 @@ class LinkSelectionForm(swf.Form):
         self.comboBoxLink.Size = sd.Size(258, 21)
         self.comboBoxLink.TabIndex = 1
         # buttonSelect
+        self.buttonSelect.DialogResult = swf.DialogResult.OK
         self.buttonSelect.Location = sd.Point(149, 3)
         self.buttonSelect.Name = "buttonSelect"
         self.buttonSelect.Size = sd.Size(75, 23)
         self.buttonSelect.TabIndex = 0
         self.buttonSelect.Text = "Select"
         self.buttonSelect.UseVisualStyleBackColor = True
-        self.buttonSelect.Click += self.buttonSelect_Click
         # buttonCancel
         self.buttonCancel.Anchor = swf.AnchorStyles.None
         self.buttonCancel.DialogResult = swf.DialogResult.Cancel
@@ -184,17 +184,6 @@ class LinkSelectionForm(swf.Form):
         for link_title in links.keys():
             self.comboBoxLink.Items.Add(link_title)
         self.comboBoxLink.SelectedIndex = 0
-
-    
-    def buttonSelect_Click(self, sender, args):
-        print("Select clicked!")
-        self.DialogResult = swf.DialogResult.OK
-        self.Close()
-    
-    def buttonCancel_Click(self, sender, args):
-        print("Cancel clicked!")
-        self.DialogResult = swf.DialogResult.Cancel
-        self.Close()
 
 
 if __name__ == "__main__":
