@@ -32,6 +32,7 @@ def main():
             links[document.Title] = document
 
     # STEP 2: Let user select the linked document to copy from
+    print("Please select the link to copy rooms from...")
     select_form = LinkSelectionForm(links=links)
     result = select_form.ShowDialog()
     print(result)

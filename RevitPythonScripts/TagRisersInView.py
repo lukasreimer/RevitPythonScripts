@@ -69,9 +69,10 @@ def main():
         tags[full_tag_name] = tag_type
 
     # STEP 4: Get user selection for pipe riser tags to be applied
+    print("Please select the tags to be placed...")
     select_form = TagSelectionForm(tags=tags)
     result = select_form.ShowDialog()
-    print(result)
+    # print(result)
     if result == swf.DialogResult.OK:
         pass
         selected_top_tag_title = select_form.comboBoxTopTag.SelectedItem
@@ -97,7 +98,7 @@ def main():
             for pipe in both_pipes:
                 point = pipe_location(pipe, top)
                 new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
-                new_tag.ChangeTypeId(selected_top_tag.Id)
+                new_tag.ChangeTypeId(selected_both_tag.Id)
         except Exception as ex:
             print("Exception:\n {0}".format(ex))
             transaction.RollBack()
