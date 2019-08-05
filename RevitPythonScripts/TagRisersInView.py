@@ -58,38 +58,54 @@ def main():
                   .OfCategory(db.BuiltInCategory.OST_PipeTags)\
                   .WhereElementIsElementType()\
                   .ToElements()
-    print(tag_types)
+    # print(tag_types)
+    tags = {}  # tag_name: tag_type
     for tag_type in tag_types:
         tag_id = tag_type.Id
         tag_family_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_FAMILY_NAME_PARAM).AsString()
         tag_type_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_NAME_PARAM).AsString()
-        print("#{tag_id} = {f_name} - {t_name}".format(tag_id=tag_id, f_name=tag_family_name, t_name=tag_type_name))
+        # print("#{tag_id} = {f_name} - {t_name}".format(tag_id=tag_id, f_name=tag_family_name, t_name=tag_type_name))
+        full_tag_name = "{f_name} - {t_name}".format(f_name=tag_family_name, t_name=tag_type_name)
+        tags[full_tag_name] = tag_type
 
-    #TODO STEP 4: Get user selection for pipe riser tags to be applied
-    select_form = TagSelectionForm(tags=tag_types)
-    select_form.ShowDialog()
+    # STEP 4: Get user selection for pipe riser tags to be applied
+    select_form = TagSelectionForm(tags=tags)
+    result = select_form.ShowDialog()
+    print(result)
+    if result == swf.DialogResult.OK:
+        pass
+        selected_top_tag_title = select_form.comboBoxTopTag.SelectedItem
+        selected_top_tag = tags[selected_top_tag_title]
+        selected_bottom_tag_title = select_form.comboBoxBottomTag.SelectedItem
+        selected_bottom_tag = tags[selected_bottom_tag_title]
+        selected_both_tag_title = select_form.comboBoxBothTag.SelectedItem
+        selected_both_tag = tags[selected_both_tag_title]
 
-
-    #TODO: STEP 5: Place tags at the pipes
-    print("Crating tags...")
-    transaction = db.Transaction(doc)
-    transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
-    try:
-        for pipe in upper_pipes:
-            point = pipe_location(pipe, top)
-            new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
-            #print(new_tag)
-            # new_tag.ChangeTypeId(db.ElementId(1096070))  # TODO: get id from user selection
-        for pipe in lower_pipes:
-            pass  # TODO implement as above
-        for pipe in both_pipes:
-            pass  # TODO implement as above
-    except Exception as ex:
-        print("Exception:\n {0}".format(ex))
-        transaction.RollBack()
+        # STEP 5: Place tags at the pipes
+        print("Creating tags...")
+        transaction = db.Transaction(doc)
+        transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
+        try:
+            for pipe in upper_pipes:
+                point = pipe_location(pipe, top)
+                new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
+                new_tag.ChangeTypeId(selected_top_tag.Id)
+            for pipe in lower_pipes:
+                point = pipe_location(pipe, bottom)
+                new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
+                new_tag.ChangeTypeId(selected_bottom_tag.Id)
+            for pipe in both_pipes:
+                point = pipe_location(pipe, top)
+                new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
+                new_tag.ChangeTypeId(selected_top_tag.Id)
+        except Exception as ex:
+            print("Exception:\n {0}".format(ex))
+            transaction.RollBack()
+        else:
+            transaction.Commit()
+            print("Done.")
     else:
-        transaction.Commit()
-        print("Done.")
+        print("No link selected, nothing to do.")
 
 
 # Helpers:
@@ -167,11 +183,10 @@ def pipe_location(pipe, elevation):
     curve = pipe.Location.Curve
     pipe_point = curve.GetEndPoint(0)
     point = db.XYZ(pipe_point.X, pipe_point.Y, elevation)
-    print("pipe location = {}".format(point))
+    # print("pipe location = {}".format(point))
     return point
 
 
-# TODO: implement functionality
 class TagSelectionForm(swf.Form):
     """Link selection form."""
 
@@ -183,9 +198,9 @@ class TagSelectionForm(swf.Form):
         self.labelTopTag = swf.Label()
         self.labelBottomTag = swf.Label()
         self.labelBothTag = swf.Label()
-        self.comboBox1 = swf.ComboBox()
-        self.comboBox2 = swf.ComboBox()
-        self.comboBox3 = swf.ComboBox()
+        self.comboBoxTopTag = swf.ComboBox()
+        self.comboBoxBottomTag = swf.ComboBox()
+        self.comboBoxBothTag = swf.ComboBox()
         self.buttonCancel = swf.Button()
         self.buttonSelect = swf.Button()
         self.tableLayoutPanelOverall.SuspendLayout()
@@ -222,26 +237,26 @@ class TagSelectionForm(swf.Form):
         self.labelBothTag.Size = sd.Size(51, 13)
         self.labelBothTag.TabIndex = 2
         # comboBox1
-        self.comboBox1.Name = "comboBox1"
-        self.comboBox1.Anchor = swf.AnchorStyles.Left | swf.AnchorStyles.Right
-        self.comboBox1.FormattingEnabled = True
-        self.comboBox1.Location = sd.Point(108, 9)
-        self.comboBox1.Size = sd.Size(268, 21)
-        self.comboBox1.TabIndex = 3
+        self.comboBoxTopTag.Name = "comboBoxTopTag"
+        self.comboBoxTopTag.Anchor = swf.AnchorStyles.Left | swf.AnchorStyles.Right
+        self.comboBoxTopTag.FormattingEnabled = True
+        self.comboBoxTopTag.Location = sd.Point(108, 9)
+        self.comboBoxTopTag.Size = sd.Size(268, 21)
+        self.comboBoxTopTag.TabIndex = 3
         # comboBox2
-        self.comboBox2.Name = "comboBox2"
-        self.comboBox2.Anchor = swf.AnchorStyles.Left | swf.AnchorStyles.Right
-        self.comboBox2.FormattingEnabled = True
-        self.comboBox2.Location = sd.Point(108, 39)
-        self.comboBox2.Size = sd.Size(268, 21)
-        self.comboBox2.TabIndex = 4
+        self.comboBoxBottomTag.Name = "comboBoxBottomTag"
+        self.comboBoxBottomTag.Anchor = swf.AnchorStyles.Left | swf.AnchorStyles.Right
+        self.comboBoxBottomTag.FormattingEnabled = True
+        self.comboBoxBottomTag.Location = sd.Point(108, 39)
+        self.comboBoxBottomTag.Size = sd.Size(268, 21)
+        self.comboBoxBottomTag.TabIndex = 4
         # comboBox3
-        self.comboBox3.Name = "comboBox3"
-        self.comboBox3.Anchor = swf.AnchorStyles.Left | swf.AnchorStyles.Right
-        self.comboBox3.FormattingEnabled = True
-        self.comboBox3.Location = sd.Point(108, 69)
-        self.comboBox3.Size = sd.Size(268, 21)
-        self.comboBox3.TabIndex = 5
+        self.comboBoxBothTag.Name = "comboBoxBothTag"
+        self.comboBoxBothTag.Anchor = swf.AnchorStyles.Left | swf.AnchorStyles.Right
+        self.comboBoxBothTag.FormattingEnabled = True
+        self.comboBoxBothTag.Location = sd.Point(108, 69)
+        self.comboBoxBothTag.Size = sd.Size(268, 21)
+        self.comboBoxBothTag.TabIndex = 5
         # buttonCancel
         self.buttonCancel.Name = "buttonCancel"
         self.buttonCancel.Text = "Cancel"
@@ -278,9 +293,9 @@ class TagSelectionForm(swf.Form):
         self.tableLayoutPanelOverall.Controls.Add(self.labelTopTag, 0, 0)
         self.tableLayoutPanelOverall.Controls.Add(self.labelBottomTag, 0, 1)
         self.tableLayoutPanelOverall.Controls.Add(self.labelBothTag, 0, 2)
-        self.tableLayoutPanelOverall.Controls.Add(self.comboBox1, 1, 0)
-        self.tableLayoutPanelOverall.Controls.Add(self.comboBox2, 1, 1)
-        self.tableLayoutPanelOverall.Controls.Add(self.comboBox3, 1, 2)
+        self.tableLayoutPanelOverall.Controls.Add(self.comboBoxTopTag, 1, 0)
+        self.tableLayoutPanelOverall.Controls.Add(self.comboBoxBottomTag, 1, 1)
+        self.tableLayoutPanelOverall.Controls.Add(self.comboBoxBothTag, 1, 2)
         self.tableLayoutPanelOverall.Controls.Add(self.flowLayoutPanelButtons, 1, 3)
         self.tableLayoutPanelOverall.Dock = swf.DockStyle.Fill
         self.tableLayoutPanelOverall.Location = sd.Point(0, 0)
@@ -310,7 +325,15 @@ class TagSelectionForm(swf.Form):
     
     def populate_combo_boxes(self, tags):
         """Populate the combo boxes with tag names."""
-        pass
+        # Fill combo boxes with tag titles
+        for tag_title in sorted(tags.keys()):
+            self.comboBoxTopTag.Items.Add(tag_title)
+            self.comboBoxBottomTag.Items.Add(tag_title)
+            self.comboBoxBothTag.Items.Add(tag_title)
+        # Preselect first item in the list
+        self.comboBoxTopTag.SelectedIndex = 0
+        self.comboBoxBottomTag.SelectedIndex = 0
+        self.comboBoxBothTag.SelectedIndex = 0
 
 
 if __name__ == "__main__":
