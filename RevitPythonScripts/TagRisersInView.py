@@ -33,46 +33,38 @@ def main():
               .OfCategory(db.BuiltInCategory.OST_PipeCurves)\
               .ToElements()
     print("Found {num} pipes in the currently active view.".format(num=len(pipes)))
-    # print(pipes)
     vertical_pipes = [pipe for pipe in pipes if is_vertical(pipe)]
     print("Found {num} vertical pipes in the view.".format(num=len(vertical_pipes)))
-    # print(vertical_pipes)
 
     # STEP 2: Filter all pipes crossing upper and lower view range boundary
-    top, bottom = top_and_bottom_elevation(doc, view)
+    # TODO: make sure view is a plan view otherwise this may fail!
+    top, bottom = top_and_bottom_elevation(doc, view)  
     print("Top boundary elevation is {0} ft".format(top))
     print("Bottom boundary elevation is {0} ft".format(bottom))
-
     upper_pipes = [pipe for pipe in vertical_pipes if cuts_top_only(pipe, top, bottom)]
     lower_pipes = [pipe for pipe in vertical_pipes if cuts_bottom_only(pipe, top, bottom)]
     both_pipes =[pipe for pipe in vertical_pipes if cuts_top_and_bottom(pipe, top, bottom)]
     print("Found {num} pipes crossing upper boundary only.".format(num=len(upper_pipes)))
-    # print(upper_pipes)
     print("Found {num} pipes crossing lower boundary only.".format(num=len(lower_pipes)))
-    # print(lower_pipes)
     print("Found {num} pipes crossing both boundaries.".format(num=len(both_pipes)))
-    # print(both_pipes)
 
     # STEP 3: Get all available pipe tags in the project
     tag_types = db.FilteredElementCollector(doc)\
                   .OfCategory(db.BuiltInCategory.OST_PipeTags)\
                   .WhereElementIsElementType()\
                   .ToElements()
-    # print(tag_types)
-    tags = {}  # tag_name: tag_type
+    tags = {}  # tag_title: tag_type
     for tag_type in tag_types:
-        tag_id = tag_type.Id
         tag_family_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_FAMILY_NAME_PARAM).AsString()
         tag_type_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_NAME_PARAM).AsString()
-        # print("#{tag_id} = {f_name} - {t_name}".format(tag_id=tag_id, f_name=tag_family_name, t_name=tag_type_name))
         full_tag_name = "{f_name} - {t_name}".format(f_name=tag_family_name, t_name=tag_type_name)
         tags[full_tag_name] = tag_type
 
     # STEP 4: Get user selection for pipe riser tags to be applied
     print("Please select the tags to be placed...")
+    # TODO: add optional pipe system filter to the selection form and apply tags only to those matching
     select_form = TagSelectionForm(tags=tags)
     result = select_form.ShowDialog()
-    # print(result)
     if result == swf.DialogResult.OK:
         pass
         selected_top_tag_title = select_form.comboBoxTopTag.SelectedItem
@@ -105,7 +97,7 @@ def main():
         else:
             transaction.Commit()
             print("Done.")
-    else:
+    else:  # result != swf.DialogResult.OK
         print("No link selected, nothing to do.")
 
 
