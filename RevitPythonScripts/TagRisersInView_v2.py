@@ -11,9 +11,10 @@ import System.Windows.Forms as swf
 import System.Drawing as sd
 
 __name = "TagRisersInView.py"
-__version = "0.1a"
+__version = "0.2a"
 
 
+# TODO: research and implement categorization according to pipe connectors (IN, OUT) -> flow direction
 def main():
     """Main Script
 
@@ -30,6 +31,22 @@ def main():
 
     print("Current view is: '{v}' {t}".format(v=view.Name, t=type(view)))
     if type(view) is db.ViewPlan:
+
+        # STEP 0: Get all available System Types in the project
+        print("Getting all available piping system types from the model...")
+        system_types = db.FilteredElementCollector(doc)\
+                         .OfClass(db.Plumbing.PipingSystemType)\
+                         .ToElements()
+        systems = {}
+        for system in system_types:
+            name = system.get_Parameter(db.BuiltInParameter.ALL_MODEL_TYPE_NAME).AsString()
+            systems[name] = system
+
+        system_select_form = SystemSelectionForm(systems=systems)
+        result = system_select_form.ShowDialog()
+        if result == swf.DialogResult.OK:
+            selected_system_title = system_select_form.comboBoxSystem.SelectedItem
+            print(selected_system_title)
         
         # STEP 1: Get all vertical pipes in the view
         print("Getting all pipes from the currently active view...")
@@ -65,6 +82,7 @@ def main():
 
         # STEP 4: Get user selection for pipe riser tags to be applied
         print("Please select the tags to be placed...")
+        # TODO: add optional pipe system filter to the selection form and apply tags only to those matching this
         tag_select_form = TagSelectionForm(tags=tags)
         result = tag_select_form.ShowDialog()
         if result == swf.DialogResult.OK:
@@ -180,6 +198,102 @@ def pipe_location(pipe, elevation):
     point = db.XYZ(pipe_point.X, pipe_point.Y, elevation)
     # print("pipe location = {}".format(point))
     return point
+
+
+class SystemSelectionForm(swf.Form):
+    """System selection form."""
+
+    def __init__(self, systems):
+        """Initializer."""
+        # Instatiate widgets
+        self.tableLayoutPanelOverall = swf.TableLayoutPanel()
+        self.flowLayoutPanelButtons = swf.FlowLayoutPanel()
+        self.labelSystem = swf.Label()
+        self.comboBoxSystem = swf.ComboBox()
+        self.buttonCancel = swf.Button()
+        self.buttonSelect = swf.Button()
+        self.tableLayoutPanelOverall.SuspendLayout()
+        self.flowLayoutPanelButtons.SuspendLayout()
+        self.SuspendLayout()
+        # Call layout functions
+        self.layout_widgets()
+        self.populate_combo_boxe(systems)
+
+    def layout_widgets(self):
+        """Layout the widgets."""
+        # labelSystem
+        self.labelSystem.Text = "Piping System"
+        self.labelSystem.Anchor = swf.AnchorStyles.Right
+        self.labelSystem.AutoSize = True
+        self.labelSystem.Location = sd.Point(54, 13)
+        self.labelSystem.Size = sd.Size(48, 13)
+        self.labelSystem.TabIndex = 0
+        # comboBoxSystem
+        self.comboBoxSystem.Anchor = swf.AnchorStyles.Left | swf.AnchorStyles.Right
+        self.comboBoxSystem.FormattingEnabled = True
+        self.comboBoxSystem.Location = sd.Point(108, 9)
+        self.comboBoxSystem.Size = sd.Size(268, 21)
+        self.comboBoxSystem.TabIndex = 3
+        # buttonCancel
+        self.buttonCancel.Text = "Cancel"
+        self.buttonCancel.DialogResult = swf.DialogResult.Cancel
+        self.buttonCancel.Location = sd.Point(290, 8)
+        self.buttonCancel.Size = sd.Size(75, 23)
+        self.buttonCancel.TabIndex = 0
+        self.buttonCancel.UseVisualStyleBackColor = True
+        # buttonSelect
+        self.buttonSelect.Text = "Select"
+        self.buttonSelect.DialogResult = swf.DialogResult.OK
+        self.buttonSelect.Location = sd.Point(209, 8)
+        self.buttonSelect.Size = sd.Size(75, 23)
+        self.buttonSelect.TabIndex = 1
+        self.buttonSelect.UseVisualStyleBackColor = True
+        # flowLayoutPanelButtons
+        self.tableLayoutPanelOverall.SetColumnSpan(self.flowLayoutPanelButtons, 2)
+        self.flowLayoutPanelButtons.Controls.Add(self.buttonCancel)
+        self.flowLayoutPanelButtons.Controls.Add(self.buttonSelect)
+        self.flowLayoutPanelButtons.Dock = swf.DockStyle.Fill
+        self.flowLayoutPanelButtons.FlowDirection = swf.FlowDirection.RightToLeft
+        self.flowLayoutPanelButtons.Location = sd.Point(8, 98)
+        self.flowLayoutPanelButtons.Padding = swf.Padding(0, 5, 0, 0)
+        self.flowLayoutPanelButtons.Size = sd.Size(368, 45)
+        self.flowLayoutPanelButtons.TabIndex = 6
+        # tableLayoutPanelOverall
+        self.tableLayoutPanelOverall.ColumnCount = 2
+        self.tableLayoutPanelOverall.ColumnStyles.Add(swf.ColumnStyle(swf.SizeType.Absolute, 100))
+        self.tableLayoutPanelOverall.ColumnStyles.Add(swf.ColumnStyle())
+        self.tableLayoutPanelOverall.Controls.Add(self.labelSystem, 0, 0)
+        self.tableLayoutPanelOverall.Controls.Add(self.comboBoxSystem, 1, 0)
+        self.tableLayoutPanelOverall.Controls.Add(self.flowLayoutPanelButtons, 1, 1)
+        self.tableLayoutPanelOverall.Dock = swf.DockStyle.Fill
+        self.tableLayoutPanelOverall.Location = sd.Point(0, 0)
+        self.tableLayoutPanelOverall.Padding = swf.Padding(5)
+        self.tableLayoutPanelOverall.RowCount = 2
+        self.tableLayoutPanelOverall.RowStyles.Add(swf.RowStyle(swf.SizeType.Absolute, 30))
+        self.tableLayoutPanelOverall.RowStyles.Add(swf.RowStyle())
+        self.tableLayoutPanelOverall.Size = sd.Size(384, 91)
+        self.tableLayoutPanelOverall.TabIndex = 0
+        # TagSelectionForm
+        self.Text = "TagRisersInView.py System Selection"
+        self.AcceptButton = self.buttonSelect
+        self.CancelButton = self.buttonCancel
+        self.AutoScaleDimensions = sd.SizeF(6, 13)
+        self.AutoScaleMode = swf.AutoScaleMode.Font
+        self.ClientSize = sd.Size(384, 91)
+        self.Controls.Add(self.tableLayoutPanelOverall)
+        self.KeyPreview = True
+        self.MinimumSize = sd.Size(400, 130)
+        self.tableLayoutPanelOverall.ResumeLayout(False)
+        self.tableLayoutPanelOverall.PerformLayout()
+        self.flowLayoutPanelButtons.ResumeLayout(False)
+        self.ResumeLayout(False)
+    
+    def populate_combo_boxe(self, systems):
+        """Populate the combo boxes with tag names."""
+        self.comboBoxSystem.Items.Add("No Filter")
+        for system_name in sorted(systems.keys()):
+            self.comboBoxSystem.Items.Add(system_name)
+        self.comboBoxSystem.SelectedIndex = 0
 
 
 class TagSelectionForm(swf.Form):
