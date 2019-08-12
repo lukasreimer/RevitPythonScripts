@@ -15,12 +15,64 @@ __version = "0.2a"
 
 
 # TODO: research and implement categorization according to pipe connectors (IN, OUT) -> flow direction
+template_piping_system_types = {
+    # Feuerlösch
+    ("BHE_DE_Feuerlösch_Druckluftleitung",              "DL"): "...",
+    ("BHE_DE_Feuerlösch_Feuerlöschleitung nass",        "LWN"): "...",
+    ("BHE_DE_Feuerlösch_Feuerlöschleitung trocken",     "LWT"): "...",
+    ("BHE_DE_Feuerlösch_Gaslösch",                      "GS"): "...",
+    ("BHE_DE_Feuerlösch_Sprinklerleitung mit Glykol",   "GA-SPR"): "...",
+    ("BHE_DE_Feuerlösch_Sprinklerleitung nass",         "SPR"): "...",
+    ("BHE_DE_Feuerlösch_Sprinklerleitung trocken",      "SPT") : "...",
+    ("BHE_DE_Feuerlösch_Sprinklerleitung vorgesteuert", "PA-SPR") : "...",
+    # Heizung
+    ("BHE_DE_Heizung_BKT-Anbindeleitung Vorlauf",  "BKTVL") : "...",
+    ("BHE_DE_Heizung_BKT-Anbindeleitung Rücklauf", "BKTRL") : "...",
+    ("BHE_DE_Heizung_Dynamisch Vorlauf",           "HDVL") : "...",
+    ("BHE_DE_Heizung_Dynamisch Rücklauf",          "HDRL") : "...",
+    ("BHE_DE_Heizung_Statisch Vorlauf",            "HSVL") : "...",
+    ("BHE_DE_Heizung_Statisch Rücklauf",           "HSRL") : "...",
+    ("BHE_DE_Heizung_TSD-Anbindeleitung Vorlauf",  "TSDVL") : "...",
+    ("BHE_DE_Heizung_TSD-Anbindeleitung Rücklauf", "TSDRL") : "...",
+    # Kälte
+    ("BHE_DE_Kälte_Glykol Vorlauf",  "GVL") : "...",
+    ("BHE_DE_Kälte_Glykol Rücklauf", "GRL") : "...",
+    ("BHE_DE_Kälte_Kondensat",       "KON") : "...",
+    ("BHE_DE_Kälte_Rücklauf 6/12",   "KRL") : "...",
+    ("BHE_DE_Kälte_Rücklauf 14/16",  "KRL") : "...",
+    ("BHE_DE_Kälte_Vorlauf 6/12",    "KVL") : "...",
+    ("BHE_DE_Kälte_Vorlauf 14/16",   "KVL") : "...",
+    ("BHE_DE_Kälte_VRV-Flüssigkeit", "VRVF") : "...",
+    ("BHE_DE_Kälte_VRV-Gas",         "VRVG") : "...",
+    # Sanitär
+    ("BHE_DE_Sanitär_Erdgas",                                    "GAS") : "...",
+    ("BHE_DE_Sanitär_Fett Entleerung",                           "FE") : "...",
+    ("BHE_DE_Sanitär_Fettabwasser",                              "FW") : "...",
+    ("BHE_DE_Sanitär_Fettabwasser Grundleitung",                 "FWG") : "...",
+    ("BHE_DE_Sanitär_Fettabwasser Lüftung",                      "FWL") : "...",
+    ("BHE_DE_Sanitär_Kondensatleitung",                          "KON") : "...",
+    ("BHE_DE_Sanitär_Regenwasser Druckleitung",                  "RWP") : "...",
+    ("BHE_DE_Sanitär_Regenwasser Druckströmung",                 "RWD") : "...",
+    ("BHE_DE_Sanitär_Regenwasser Druckströmung Notentwässerung", "RWDN") : "...",
+    ("BHE_DE_Sanitär_Regenwasser Freispiegel",                   "RW") : "...",
+    ("BHE_DE_Sanitär_Regenwasser Freispiegel Notentwässerung",   "RWN") : "...",
+    ("BHE_DE_Sanitär_Regenwasser Grundleitung",                  "RWG") : "...",
+    ("BHE_DE_Sanitär_Regenwasser Grundleitung Notentwässerung",  "RWGN") : "...",
+    ("BHE_DE_Sanitär_Schmutzwasser",                             "SW") : "...",
+    ("BHE_DE_Sanitär_Schmutzwasser Druckleitung",                "SWD") : "...",
+    ("BHE_DE_Sanitär_Schmutzwasser Grundleitung",                "SWG") : "...",
+    ("BHE_DE_Sanitär_Schmutzwasser Lüftung",                     "SWL") : "...",
+    ("BHE_DE_Sanitär_Trinkwasser Kalt",                          "TWK") : "...",
+    ("BHE_DE_Sanitär_Trinkwasser Warm",                          "TWW") : "...",
+    ("BHE_DE_Sanitär_Trinkwasser Zirkulation",                   "TWZ") : "...",
+}
+
+
 def main():
-    """Main Script
+    """Main Script.
 
     This script is tagging all vertical pipe risers in the current view.
     """
-    
     print("Running {fname} version {ver}...".format(fname=__name, ver=__version))
 
     # STEP 0: Setup
