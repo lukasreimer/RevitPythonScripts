@@ -64,6 +64,10 @@ def main():
         all_ids = db.FilteredElementCollector(doc, view.Id)\
                     .WhereElementIsNotElementType()\
                     .ToElementIds()
+        
+        # TODO: ask user how to whow the clashes
+        # option A: mark clashing elements red, dim the rest
+        # option B: hide non clashing elements
 
         # STEP 2: Setup override styles for marking the clashing elements
         clashing_overrides = db.OverrideGraphicSettings()
@@ -77,6 +81,8 @@ def main():
         faded_overrides.SetProjectionFillColor(FADED_COLOR)
         faded_overrides.SetProjectionFillPatternId(FADED_PATTERN_ID)
         faded_overrides.SetSurfaceTransparency(FADED_TRANSPARENCY)
+
+
         
         # STEP 3: Mark all clashing elements by overriding their graphics in the current view
         transaction = db.Transaction(doc)
