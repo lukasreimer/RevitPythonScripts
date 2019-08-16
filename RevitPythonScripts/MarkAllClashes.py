@@ -14,10 +14,9 @@ __version = "0.1a"
 
 CLASH_COLOR = db.Color(255, 0, 0)  # red
 CLASH_PATTERN_ID = db.ElementId(19)
-
 FADED_COLOR = db.Color(192, 192, 192)  # light gray
 FADED_PATTERN_ID = CLASH_PATTERN_ID
-FADED_TRANSPARENCY = 33
+FADED_TRANSPARENCY = 50
 
 
 def main():
@@ -56,7 +55,7 @@ def main():
             for elem_id in pair:
                 clashing_ids.append(elem_id)
         clashing_ids = set(clashing_ids)
-        print("Found {num} clashing elements.".format(num=len(clashing_ids)))
+        print("Found {num} clashing elements in the report.".format(num=len(clashing_ids)))
         # print(clashing_ids)
 
         # Get all element ids of the elements in the view
@@ -69,30 +68,33 @@ def main():
         
         # Get all element ids of non-clashing elements in the view
         non_clashing_ids = all_ids - clashing_ids
-        print("Found {num} non-clashing elements.".format(num=len(non_clashing_ids)))
+        print("Found {num} non-clashing elements in the currently active view.".format(num=len(non_clashing_ids)))
         # print(non_clashing_ids)
 
-        # TODO: create summary text for user input dialog        
-        summary_text = "... tbd ..."
+        # Create summary text for user input dialog       
+        summary_text = "Checked report {path}\n\n".format(path=file_path)
+        summary_text += "Number of clashes in the report = {num}\n".format(num=len(clashes))
+        summary_text += "Number of clashing elements = {num}\n".format(num=len(clashing_ids))
+        summary_text += "Number of non-clashing elements in the view = {num}\n".format(num=len(non_clashing_ids))
+        summary_text += "Total number of elements in view = {num}\n".format(num=len(all_ids))
 
         # STEP 3: Ask user for display option
         dialog = ui.TaskDialog(title="Mark All Clashes")
         dialog.MainInstruction = "Clashes Summary"
         dialog.MainContent = summary_text
-        dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink1, "Mark clashes and dim the rest")
+        dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink1, "Mark clashing elements and fade the rest")
         dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink2, "Hide all non-clashing elements temporarily")
         dialog.CommonButtons = ui.TaskDialogCommonButtons.Close
         dialog.DefaultButton = ui.TaskDialogResult.Close
         result = dialog.Show()
 
-        if result == ui.TaskDialogResult.CommandLink1:  # Mark clashes and dim the rest
-            print("Marking all clashing elements and dimming the rest...")
+        if result == ui.TaskDialogResult.CommandLink1:  # Mark clashes and fade the rest
+            print("Marking all clashing elements and fading the rest...")
             # STEP 4: Setup override styles for marking the clashing elements
             clashing_overrides = db.OverrideGraphicSettings()
             clashing_overrides.SetProjectionLineColor(CLASH_COLOR)
             clashing_overrides.SetProjectionFillColor(CLASH_COLOR)
             clashing_overrides.SetProjectionFillPatternId(CLASH_PATTERN_ID)
-
             faded_overrides = db.OverrideGraphicSettings()
             faded_overrides.SetProjectionLineColor(FADED_COLOR)
             faded_overrides.SetProjectionFillColor(FADED_COLOR)
@@ -103,7 +105,7 @@ def main():
             transaction = db.Transaction(doc)
             transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
             try:
-                for elem_id in all_ids:  # fade all visible elements
+                for elem_id in all_ids:  # fade all visible elements in the view
                     view.SetElementOverrides(db.ElementId(elem_id), faded_overrides)
                 for elem_id in clashing_ids:  # emphasize the clashing elements
                     view.SetElementOverrides(db.ElementId(elem_id), clashing_overrides)
