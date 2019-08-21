@@ -3,7 +3,6 @@
 import collections
 import datetime
 import itertools
-import os
 import string
 import clr
 clr.AddReference("RevitAPI")
@@ -147,8 +146,8 @@ def write_summary(tpipe, tduct, upipe, rpipe, uduct, rduct):
 def write_report(doc, upipe, rpipe, uduct, rduct):
     """Write report of rogue and unhosted insulation elements."""
     workset_table = doc.GetWorksetTable()
-    rogue = len(upipe) + len(uduct)
-    unhosted = len(rpipe) + len(rduct)
+    rogue = len(rpipe) + len(rduct)
+    unhosted = len(upipe) + len(uduct)
     report = []
     # write header with general information
     report.append("reporting time, {now}".format(now=datetime.datetime.now()))
@@ -160,7 +159,7 @@ def write_report(doc, upipe, rpipe, uduct, rduct):
     report.append(
         "index,element id,element name,element workset,host id,host name,host workset")
     # write rogue and unhosted element data:
-    for idx, pair in enumerate(itertools.chain(upipe, rpipe, uduct, rduct)):
+    for idx, pair in enumerate(itertools.chain(upipe, rpipe, uduct, rduct), start=1):
         elem, host = pair
         elem_workset = workset_table.GetWorkset(elem.WorksetId)
         host_workset = workset_table.GetWorkset(host.WorksetId)
@@ -173,6 +172,6 @@ def write_report(doc, upipe, rpipe, uduct, rduct):
 
 
 if __name__ == "__main__":
-    # __window__.Hide()
+    __window__.Hide()
     main()
-    # __window__.Close()
+    __window__.Close()
