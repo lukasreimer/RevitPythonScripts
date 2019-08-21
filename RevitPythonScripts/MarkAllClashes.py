@@ -10,7 +10,7 @@ clr.AddReference("System.Windows.Forms")
 import System.Windows.Forms as swf
 
 __name = "MarkAllClashes.py"
-__version = "0.1a"
+__version = "1.0b"
 
 CLASH_COLOR = db.Color(255, 0, 0)  # red
 CLASH_PATTERN_ID = db.ElementId(19)
@@ -35,9 +35,7 @@ def main():
     print("Running {fname} version {ver}...".format(fname=__name, ver=__version))
 
     # STEP 0: Setup
-    #app = __revit__.Application
     doc = __revit__.ActiveUIDocument.Document
-    #uidoc = __revit__.ActiveUIDocument
     view = doc.ActiveView
 
     # STEP 1: Ask user for clash report html file adn parse it
@@ -57,22 +55,18 @@ def main():
         parser.feed(uhtml)
         parser.close()
         clashes = parser.clashes
-        #print("Found {num} clashes in the report.".format(num=len(clashes)))
         clashing_ids = []
         for pair in parser.clashes.values():
             for elem_id in pair:
                 clashing_ids.append(elem_id)
         clashing_ids = set(clashing_ids)
-        #print("Found {num} clashing elements in the report.".format(num=len(clashing_ids)))
         # Get all element ids of the elements in the view
         all_ids = db.FilteredElementCollector(doc, view.Id)\
                     .WhereElementIsNotElementType()\
                     .ToElementIds()
         all_ids = set([elem_id.IntegerValue for elem_id in all_ids])
-        #print("Found {num} total elements in the currently active view.".format(num=len(all_ids)))
         # Get all element ids of non-clashing elements in the view
         non_clashing_ids = all_ids - clashing_ids
-        #print("Found {num} non-clashing elements in the currently active view.".format(num=len(non_clashing_ids)))
         # Create summary text for user input dialog       
         summary_text = "Checked report {path}\n".format(path=file_path)
         summary_text += "Found {num} clashes in the report.\n".format(num=len(clashes))
@@ -157,6 +151,6 @@ class InterferenceReportParser(HTMLParser):
 
 
 if __name__ == "__main__":
-    # __window__.Hide()
     main()
-    # __window__.Close()
+    __window__.Hide()
+    __window__.Close()

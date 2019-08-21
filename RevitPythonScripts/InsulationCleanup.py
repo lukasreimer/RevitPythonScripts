@@ -172,6 +172,6 @@ def write_report(doc, upipe, rpipe, uduct, rduct):
 
 
 if __name__ == "__main__":
-    __window__.Hide()
     main()
+    __window__.Hide()
     __window__.Close()
