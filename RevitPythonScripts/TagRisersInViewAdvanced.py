@@ -1,4 +1,4 @@
-"""Tag vertical risers in current view."""
+"""Tag all vertical risers in current view with the according symbol."""
 
 import clr
 clr.AddReference('RevitAPI')
@@ -10,8 +10,8 @@ clr.AddReference("System.Drawing")
 import System.Windows.Forms as swf
 import System.Drawing as sd
 
-__name = "TagRisersInView.py"
-__version = "0.2a"
+__name = "TagRisersInViewAdvanced.py"
+__version = "0.1a"
 
 
 # TODO: research and implement categorization according to pipe connectors (IN, OUT) -> flow direction

@@ -1,4 +1,4 @@
-"""Tag vertical risers in current view."""
+"""Tag all vertical risers in current view."""
 
 import clr
 clr.AddReference('RevitAPI')
