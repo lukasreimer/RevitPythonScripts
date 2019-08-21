@@ -14,7 +14,7 @@ clr.AddReference("System.Windows.Forms")
 import System.Windows.Forms as swf
 
 __name = "InsulationCleanup.py"
-__version = "0.1a"
+__version = "1.0b"
 
 CHECK = "✔"
 ERROR = "✘"
@@ -22,26 +22,20 @@ ERROR = "✘"
 def main():
     """Main Script."""
 
-    print("Running {name} version {ver}".format(name=__name, ver=__version))
+    print("Running {name} version {ver}...".format(name=__name, ver=__version))
 
     # STEP 0: Setup
     doc = __revit__.ActiveUIDocument.Document
 
-    # STEP 1: Inspect Model
-    pipe_ins_elems = query_all_elements_of_category(
-        doc=doc, cat=db.BuiltInCategory.OST_PipeInsulations)
-    duct_ins_elems = query_all_elements_of_category(
-        doc=doc, cat=db.BuiltInCategory.OST_DuctInsulations)
-
-    rogue_pipe, unhosted_pipe = find_rogue_and_unhosted_elements(
-        doc=doc, elems=pipe_ins_elems)
-    rogue_duct, unhosted_duct = find_rogue_and_unhosted_elements(
-        doc=doc, elems=duct_ins_elems)
-
+    # STEP 1: Inspect Model and summarize findings
+    pipe_insulations = query_all_elements_of_category(doc=doc, cat=db.BuiltInCategory.OST_PipeInsulations)
+    duct_insulations = query_all_elements_of_category(doc=doc, cat=db.BuiltInCategory.OST_DuctInsulations)
+    rogue_pipe, unhosted_pipe = find_rogue_and_unhosted_elements(doc=doc, elems=pipe_insulations)
+    rogue_duct, unhosted_duct = find_rogue_and_unhosted_elements(doc=doc, elems=duct_insulations)
     summary_list = write_summary(
-        tpipe=pipe_ins_elems, tduct=duct_ins_elems,  # totals
-        upipe= unhosted_pipe, uduct=unhosted_duct,  # unhosted
-        rpipe=rogue_pipe, rduct=rogue_duct)  # rogue
+        tpipe=pipe_insulations, tduct=duct_insulations,  # totals
+        upipe= unhosted_pipe, uduct=unhosted_duct,       # unhosted
+        rpipe=rogue_pipe, rduct=rogue_duct)              # rogue
     summary_text = string.join(summary_list, "\n")
     print(summary_text)
 
@@ -49,10 +43,8 @@ def main():
     dialog = ui.TaskDialog(title="Insulation Cleanup")
     dialog.MainInstruction = "Insulation Cleanup Summary"
     dialog.MainContent = summary_text
-    dialog.AddCommandLink(
-        ui.TaskDialogCommandLinkId.CommandLink1, "Write Report")
-    dialog.AddCommandLink(
-        ui.TaskDialogCommandLinkId.CommandLink2, "Clean Insulation")
+    dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink1, "Write Report")
+    dialog.AddCommandLink(ui.TaskDialogCommandLinkId.CommandLink2, "Clean Insulation")
     dialog.CommonButtons = ui.TaskDialogCommonButtons.Close
     dialog.DefaultButton = ui.TaskDialogResult.Close
     result = dialog.Show()
@@ -66,7 +58,6 @@ def main():
         if save_dialog.ShowDialog() == swf.DialogResult.OK:  # Save report
             file_path = save_dialog.FileName
             print("Writing report to {0}".format(file_path))
-            # TODO: actually save report file
             with open(file_path, mode="wb") as fh:
                 report = write_report(
                     doc, unhosted_pipe, rogue_pipe, unhosted_duct, rogue_duct)
@@ -82,20 +73,16 @@ def main():
             print("Cleaning Insulation...")
             for pipe_element in unhosted_pipe:
                 doc.Delete(pipe_element.Id)
-            print("Deleted {num} unhosted pipe insulation elements".format(
-                num=len(unhosted_pipe)))
+            print("Deleted {num} unhosted pipe insulation elements".format(num=len(unhosted_pipe)))
             for pipe_pair in rogue_pipe:
                 cleanup_insulation(pipe_pair)
-            print("Moved {num} rogue pipe insulation elements.".format(
-                num=len(rogue_pipe)))
+            print("Moved {num} rogue pipe insulation elements.".format(num=len(rogue_pipe)))
             for duct_element in unhosted_duct:
                 doc.Delete(duct_element.Id)
-            print("Deleted {num} unhosted duct insulation elements.".format(
-                num=len(unhosted_duct)))
+            print("Deleted {num} unhosted duct insulation elements.".format(num=len(unhosted_duct)))
             for duct_pair in rogue_duct:
                 cleanup_insulation(duct_pair)
-            print("Moved {num} rogue duct insulation elements.".format(
-                num=len(rogue_duct)))
+            print("Moved {num} rogue duct insulation elements.".format(num=len(rogue_duct)))
         except Exception as exception:
             print("Failed.\nException:\n{ex}".format(ex=exception))
             transaction.RollBack()
@@ -106,7 +93,6 @@ def main():
         print("Nothing to do.")
 
 
-# Helpers:
 ElementHostPair = collections.namedtuple("ElementHostPair", ["element", "host"])
 
 
@@ -151,7 +137,6 @@ def write_summary(tpipe, tduct, upipe, rpipe, uduct, rduct):
     summary.append("{res} Found {num} rogue pipe insulation elements.".format(num=len(rpipe), res=ERROR if len(rpipe) else CHECK))
     summary.append("{res} Found {num} unhosted pipe insulation elements.".format(num=len(upipe), res=ERROR if len(upipe) else CHECK))
     summary.append("There is a total of {tot} pipe insulation elements in the model.".format(tot=len(tpipe)))
-    summary.append("")
     summary.append("Duct Insulation:")
     summary.append("{res} Found {num} rogue duct insulation elements.".format(num=len(rduct), res=ERROR if len(rduct) else CHECK))
     summary.append("{res} Found {num} unhosted duct insulation elements.".format(num=len(uduct), res=ERROR if len(uduct) else CHECK))
@@ -162,26 +147,27 @@ def write_summary(tpipe, tduct, upipe, rpipe, uduct, rduct):
 def write_report(doc, upipe, rpipe, uduct, rduct):
     """Write report of rogue and unhosted insulation elements."""
     workset_table = doc.GetWorksetTable()
+    rogue = len(upipe) + len(uduct)
+    unhosted = len(rpipe) + len(rduct)
     report = []
-    report.append("time: {now}".format(now=datetime.datetime.now()))
-    report.append("[index/total] element, host")
-    total_unhosted = len(upipe) + len(uduct)
-    total_rogue = len(rpipe) + len(rduct)
-    report.append("--- Unhosted: {num} elements ---".format(num=total_unhosted))
-    for idx, pair in enumerate(itertools.chain(upipe, uduct)):
-        elem, host = pair
-        line = "[{idx}/{tot}] #{e_id}, {e_name} @'{e_ws}' --> #{h_id}, {h_name} @'{h_ws}'".format(
-            idx=idx, tot=total_unhosted,
-            e_id=elem.Id, e_name=elem.Name, e_ws=workset_table.GetWorkset(elem.WorksetId).Name,
-            h_id=host.Id, h_name=host.Name, h_ws=workset_table.GetWorkset(host.WorksetId).Name)
-        report.append(line)
-    report.append("--- Rogue: {num_rogue} elements ---".format(num_rogue=total_rogue))
+    # write header with general information
+    report.append("reporting time, {now}".format(now=datetime.datetime.now()))
+    report.append("rogue elements, {num}".format(num=rogue))
+    report.append("unhosted elements, {num}".format(num=unhosted))
+    report.append("---")
+    # define csv structure template and header line
+    line_template = "{idx},{eid},'{en}','{ews}',{hid},'{hn}','{hws}'"
+    report.append(
+        "index,element id,element name,element workset,host id,host name,host workset")
+    # write rogue and unhosted element data:
     for idx, pair in enumerate(itertools.chain(upipe, rpipe, uduct, rduct)):
         elem, host = pair
-        line = "[{idx}/{tot}] #{e_id}, {e_name} @'{e_ws}' --> #{h_id}, {h_name} @'{h_ws}'".format(
-            idx=idx, tot=total_rogue,
-            e_id=elem.Id, e_name=elem.Name, e_ws=workset_table.GetWorkset(elem.WorksetId).Name,
-            h_id=host.Id, h_name=host.Name, h_ws=workset_table.GetWorkset(host.WorksetId).Name)
+        elem_workset = workset_table.GetWorkset(elem.WorksetId)
+        host_workset = workset_table.GetWorkset(host.WorksetId)
+        line = line_template.format(
+            idx=idx,
+            eid=elem.Id.IntegerValue, en=elem.Name, ews=elem_workset.Name,
+            hid=host.Id.IntegerValue, hn=host.Name, hws=host_workset.Name)
         report.append(line)
     return report
 
