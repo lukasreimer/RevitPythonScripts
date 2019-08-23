@@ -1,5 +1,6 @@
 """Tag all vertical risers in current view."""
 # TODO: investigate Transformation stuff messing up elevation / point comparisons
+# survey point / project base point
 
 import itertools
 import clr
@@ -17,7 +18,7 @@ __version = "0.1a"
 
 
 def main():
-    """Main Script. """
+    """Main Script."""
     
     print("Running {fname} version {ver}...".format(fname=__name, ver=__version))
 
@@ -109,6 +110,7 @@ def is_vertical(pipe, tolerance=1.0e-6):
         if dx < tolerance and dy < tolerance:
             return True
     return False
+
 
 def top_and_bottom_elevation(doc, view):
     """Extract top and bottom elevation of a plan view."""
