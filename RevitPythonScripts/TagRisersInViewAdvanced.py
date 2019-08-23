@@ -69,10 +69,8 @@ template_piping_system_types = {
 
 
 def main():
-    """Main Script.
-
-    This script is tagging all vertical pipe risers in the current view.
-    """
+    """Main Script. """
+    
     print("Running {fname} version {ver}...".format(fname=__name, ver=__version))
 
     # STEP 0: Setup

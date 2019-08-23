@@ -1,5 +1,6 @@
 """Tag all vertical risers in current view."""
 
+import itertools
 import clr
 clr.AddReference('RevitAPI')
 clr.AddReference('RevitAPIUI')
@@ -15,10 +16,7 @@ __version = "0.1a"
 
 
 def main():
-    """Main Script
-
-    This script is tagging all vertical pipe risers in the current view.
-    """
+    """Main Script. """
     
     print("Running {fname} version {ver}...".format(fname=__name, ver=__version))
 
@@ -28,13 +26,14 @@ def main():
     uidoc = __revit__.ActiveUIDocument
     view = doc.ActiveView
 
-    print("Current view is: '{v}' {t}".format(v=view.Name, t=type(view)))
+    print("Current view is: '{vname}' of type {vtype}".format(vname=view.Name, vtype=type(view)))
     if type(view) is db.ViewPlan:
         
         # STEP 1: Get all vertical pipes in the view
         print("Getting all pipes from the currently active view...")
         pipes = db.FilteredElementCollector(doc, view.Id)\
                   .OfCategory(db.BuiltInCategory.OST_PipeCurves)\
+                  .WhereElementIsNotElementType()\
                   .ToElements()
         print("Found {num} pipes in the currently active view.".format(num=len(pipes)))
         vertical_pipes = [pipe for pipe in pipes if is_vertical(pipe)]
@@ -42,8 +41,8 @@ def main():
 
         # STEP 2: Filter all pipes crossing upper and lower view range boundary
         top, bottom = top_and_bottom_elevation(doc, view)  
-        print("Top boundary elevation is {0} ft".format(top))
-        print("Bottom boundary elevation is {0} ft".format(bottom))
+        print("Top boundary elevation is {0} ft = {1} m".format(top, top/0.3048))
+        print("Bottom boundary elevation is {0} ft = {1} m".format(bottom, bottom/0.3048))
         upper_pipes = [pipe for pipe in vertical_pipes if cuts_top_only(pipe, top, bottom)]
         lower_pipes = [pipe for pipe in vertical_pipes if cuts_bottom_only(pipe, top, bottom)]
         both_pipes =[pipe for pipe in vertical_pipes if cuts_top_and_bottom(pipe, top, bottom)]
@@ -56,7 +55,7 @@ def main():
                     .OfCategory(db.BuiltInCategory.OST_PipeTags)\
                     .WhereElementIsElementType()\
                     .ToElements()
-        tags = {}  # tag_title: tag_type
+        tags = {}  # {tag_title: tag_type}
         for tag_type in tag_types:
             tag_family_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_FAMILY_NAME_PARAM).AsString()
             tag_type_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_NAME_PARAM).AsString()
@@ -68,30 +67,18 @@ def main():
         tag_select_form = TagSelectionForm(tags=tags)
         result = tag_select_form.ShowDialog()
         if result == swf.DialogResult.OK:
-            selected_top_tag_title = tag_select_form.comboBoxTopTag.SelectedItem
-            selected_top_tag = tags[selected_top_tag_title]
-            selected_bottom_tag_title = tag_select_form.comboBoxBottomTag.SelectedItem
-            selected_bottom_tag = tags[selected_bottom_tag_title]
-            selected_both_tag_title = tag_select_form.comboBoxBothTag.SelectedItem
-            selected_both_tag = tags[selected_both_tag_title]
+            selected_tag_title = tag_select_form.get_selection()
+            selected_tag = tags[selected_tag_title]
 
             # STEP 5: Place tags at the pipes
             print("Creating tags...")
             transaction = db.Transaction(doc)
             transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
             try:
-                for pipe in upper_pipes:
+                for pipe in itertools.chain(upper_pipes, lower_pipes, both_pipes):
                     point = pipe_location(pipe, top)
-                    new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
-                    new_tag.ChangeTypeId(selected_top_tag.Id)
-                for pipe in lower_pipes:
-                    point = pipe_location(pipe, bottom)
-                    new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
-                    new_tag.ChangeTypeId(selected_bottom_tag.Id)
-                for pipe in both_pipes:
-                    point = pipe_location(pipe, top)
-                    new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
-                    new_tag.ChangeTypeId(selected_both_tag.Id)
+                    new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), True, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
+                    new_tag.ChangeTypeId(selected_tag.Id)
             except Exception as ex:
                 print("Exception:\n {0}".format(ex))
                 transaction.RollBack()
@@ -188,136 +175,91 @@ class TagSelectionForm(swf.Form):
     def __init__(self, tags):
         """Initializer."""
         # Instatiate widgets
-        self.tableLayoutPanelOverall = swf.TableLayoutPanel()
-        self.flowLayoutPanelButtons = swf.FlowLayoutPanel()
-        self.labelTopTag = swf.Label()
-        self.labelBottomTag = swf.Label()
-        self.labelBothTag = swf.Label()
-        self.comboBoxTopTag = swf.ComboBox()
-        self.comboBoxBottomTag = swf.ComboBox()
-        self.comboBoxBothTag = swf.ComboBox()
+        self.gridLayout = swf.TableLayoutPanel()
+        self.buttonLayout = swf.FlowLayoutPanel()
+        self.labelTag = swf.Label()
+        self.comboTag = swf.ComboBox()
         self.buttonCancel = swf.Button()
         self.buttonSelect = swf.Button()
-        self.tableLayoutPanelOverall.SuspendLayout()
-        self.flowLayoutPanelButtons.SuspendLayout()
+        self.gridLayout.SuspendLayout()
+        self.buttonLayout.SuspendLayout()
         self.SuspendLayout()
-        # Call layout functions
+        # Place widgets and populate them
         self.layout_widgets()
         self.populate_combo_boxes(tags)
 
     def layout_widgets(self):
         """Layout the widgets."""
-        # labelTopTag
-        self.labelTopTag.Text = "Top Tag"
-        self.labelTopTag.Anchor = swf.AnchorStyles.Right
-        self.labelTopTag.AutoSize = True
-        self.labelTopTag.Location = sd.Point(54, 13)
-        self.labelTopTag.Size = sd.Size(48, 13)
-        self.labelTopTag.TabIndex = 0
-        # labelBottomTag
-        self.labelBottomTag.Text = "Bottom Tag"
-        self.labelBottomTag.Anchor = swf.AnchorStyles.Right
-        self.labelBottomTag.AutoSize = True
-        self.labelBottomTag.Location = sd.Point(40, 43)
-        self.labelBottomTag.Size = sd.Size(62, 13)
-        self.labelBottomTag.TabIndex = 1
-        # labelBothTag
-        self.labelBothTag.Text = "Both Tag"
-        self.labelBothTag.Anchor = swf.AnchorStyles.Right
-        self.labelBothTag.AutoSize = True
-        self.labelBothTag.Location = sd.Point(51, 73)
-        self.labelBothTag.Size = sd.Size(51, 13)
-        self.labelBothTag.TabIndex = 2
-        # comboBoxTopTag
-        self.comboBoxTopTag.Anchor = swf.AnchorStyles.Left | swf.AnchorStyles.Right
-        self.comboBoxTopTag.FormattingEnabled = True
-        self.comboBoxTopTag.Location = sd.Point(108, 9)
-        self.comboBoxTopTag.Size = sd.Size(268, 21)
-        self.comboBoxTopTag.TabIndex = 3
-        # comboBoxBottomTag
-        self.comboBoxBottomTag.Anchor = swf.AnchorStyles.Left | swf.AnchorStyles.Right
-        self.comboBoxBottomTag.FormattingEnabled = True
-        self.comboBoxBottomTag.Location = sd.Point(108, 39)
-        self.comboBoxBottomTag.Size = sd.Size(268, 21)
-        self.comboBoxBottomTag.TabIndex = 4
-        # comboBoxBothTag
-        self.comboBoxBothTag.Anchor = swf.AnchorStyles.Left | swf.AnchorStyles.Right
-        self.comboBoxBothTag.FormattingEnabled = True
-        self.comboBoxBothTag.Location = sd.Point(108, 69)
-        self.comboBoxBothTag.Size = sd.Size(268, 21)
-        self.comboBoxBothTag.TabIndex = 5
+        # labelTag
+        self.labelTag.Text = "Select Riser Tag:"
+        self.labelTag.Anchor = swf.AnchorStyles.Right
+        self.labelTag.AutoSize = True
+        self.labelTag.Location = sd.Point(54, 13)
+        self.labelTag.Size = sd.Size(48, 13)
+        # comboBoxTag
+        self.comboTag.Anchor = swf.AnchorStyles.Left | swf.AnchorStyles.Right
+        self.comboTag.FormattingEnabled = False
+        self.comboTag.Location = sd.Point(108, 9)
+        self.comboTag.Size = sd.Size(268, 21)
         # buttonCancel
         self.buttonCancel.Text = "Cancel"
         self.buttonCancel.DialogResult = swf.DialogResult.Cancel
         self.buttonCancel.Location = sd.Point(290, 8)
         self.buttonCancel.Size = sd.Size(75, 23)
-        self.buttonCancel.TabIndex = 0
         self.buttonCancel.UseVisualStyleBackColor = True
         # buttonSelect
         self.buttonSelect.Text = "Select"
         self.buttonSelect.DialogResult = swf.DialogResult.OK
         self.buttonSelect.Location = sd.Point(209, 8)
         self.buttonSelect.Size = sd.Size(75, 23)
-        self.buttonSelect.TabIndex = 1
         self.buttonSelect.UseVisualStyleBackColor = True
-        # self.buttonSelect.Click += self.buttonSelect_Click
-        # flowLayoutPanelButtons
-        self.tableLayoutPanelOverall.SetColumnSpan(self.flowLayoutPanelButtons, 2)
-        self.flowLayoutPanelButtons.Controls.Add(self.buttonCancel)
-        self.flowLayoutPanelButtons.Controls.Add(self.buttonSelect)
-        self.flowLayoutPanelButtons.Dock = swf.DockStyle.Fill
-        self.flowLayoutPanelButtons.FlowDirection = swf.FlowDirection.RightToLeft
-        self.flowLayoutPanelButtons.Location = sd.Point(8, 98)
-        self.flowLayoutPanelButtons.Padding = swf.Padding(0, 5, 0, 0)
-        self.flowLayoutPanelButtons.Size = sd.Size(368, 45)
-        self.flowLayoutPanelButtons.TabIndex = 6
-        # tableLayoutPanelOverall
-        self.tableLayoutPanelOverall.ColumnCount = 2
-        self.tableLayoutPanelOverall.ColumnStyles.Add(swf.ColumnStyle(swf.SizeType.Absolute, 100))
-        self.tableLayoutPanelOverall.ColumnStyles.Add(swf.ColumnStyle())
-        self.tableLayoutPanelOverall.Controls.Add(self.labelTopTag, 0, 0)
-        self.tableLayoutPanelOverall.Controls.Add(self.labelBottomTag, 0, 1)
-        self.tableLayoutPanelOverall.Controls.Add(self.labelBothTag, 0, 2)
-        self.tableLayoutPanelOverall.Controls.Add(self.comboBoxTopTag, 1, 0)
-        self.tableLayoutPanelOverall.Controls.Add(self.comboBoxBottomTag, 1, 1)
-        self.tableLayoutPanelOverall.Controls.Add(self.comboBoxBothTag, 1, 2)
-        self.tableLayoutPanelOverall.Controls.Add(self.flowLayoutPanelButtons, 1, 3)
-        self.tableLayoutPanelOverall.Dock = swf.DockStyle.Fill
-        self.tableLayoutPanelOverall.Location = sd.Point(0, 0)
-        self.tableLayoutPanelOverall.Padding = swf.Padding(5)
-        self.tableLayoutPanelOverall.RowCount = 4
-        self.tableLayoutPanelOverall.RowStyles.Add(swf.RowStyle(swf.SizeType.Absolute, 30))
-        self.tableLayoutPanelOverall.RowStyles.Add(swf.RowStyle(swf.SizeType.Absolute, 30))
-        self.tableLayoutPanelOverall.RowStyles.Add(swf.RowStyle(swf.SizeType.Absolute, 30))
-        self.tableLayoutPanelOverall.RowStyles.Add(swf.RowStyle())
-        self.tableLayoutPanelOverall.Size = sd.Size(384, 151)
-        self.tableLayoutPanelOverall.TabIndex = 0
+        # buttonLayout
+        self.buttonLayout.Dock = swf.DockStyle.Fill
+        self.buttonLayout.FlowDirection = swf.FlowDirection.RightToLeft
+        self.buttonLayout.Location = sd.Point(8, 98)
+        self.buttonLayout.Size = sd.Size(368, 45)
+        self.buttonLayout.Padding = swf.Padding(0, 5, 0, 0)
+        self.buttonLayout.Controls.Add(self.buttonCancel)
+        self.buttonLayout.Controls.Add(self.buttonSelect)
+        # gridLayout
+        self.gridLayout.Dock = swf.DockStyle.Fill
+        self.gridLayout.Location = sd.Point(0, 0)
+        self.gridLayout.Size = sd.Size(384, 81)
+        self.gridLayout.Padding = swf.Padding(5)
+        self.gridLayout.SetColumnSpan(self.buttonLayout, 2)
+        self.gridLayout.RowCount = 2
+        self.gridLayout.RowStyles.Add(swf.RowStyle(swf.SizeType.Absolute, 30))
+        self.gridLayout.RowStyles.Add(swf.RowStyle())
+        self.gridLayout.ColumnCount = 2
+        self.gridLayout.ColumnStyles.Add(swf.ColumnStyle(swf.SizeType.Absolute, 100))
+        self.gridLayout.ColumnStyles.Add(swf.ColumnStyle())
+        self.gridLayout.Controls.Add(self.labelTag, 0, 0)
+        self.gridLayout.Controls.Add(self.comboTag, 1, 0)
+        self.gridLayout.Controls.Add(self.buttonLayout, 1, 1)
         # TagSelectionForm
-        self.Text = "TagRisersInView.py Tag Selection"
+        self.Text = "TagRisersInView.py - Tag Selection"
         self.AcceptButton = self.buttonSelect
         self.CancelButton = self.buttonCancel
         self.AutoScaleDimensions = sd.SizeF(6, 13)
         self.AutoScaleMode = swf.AutoScaleMode.Font
-        self.ClientSize = sd.Size(384, 151)
-        self.Controls.Add(self.tableLayoutPanelOverall)
+        self.ClientSize = sd.Size(384, 81)
+        self.Controls.Add(self.gridLayout)
         self.KeyPreview = True
-        self.MinimumSize = sd.Size(400, 190)
-        self.tableLayoutPanelOverall.ResumeLayout(False)
-        self.tableLayoutPanelOverall.PerformLayout()
-        self.flowLayoutPanelButtons.ResumeLayout(False)
+        self.MinimumSize = sd.Size(400, 120)
+        self.gridLayout.ResumeLayout(False)
+        self.gridLayout.PerformLayout()
+        self.buttonLayout.ResumeLayout(False)
         self.ResumeLayout(False)
     
     def populate_combo_boxes(self, tags):
         """Populate the combo boxes with tag names."""
-        # Fill combo boxes with tag titles
-        for tag_title in sorted(tags.keys()):
-            self.comboBoxTopTag.Items.Add(tag_title)
-            self.comboBoxBottomTag.Items.Add(tag_title)
-            self.comboBoxBothTag.Items.Add(tag_title)
-        # Preselect first item in the list
-        self.comboBoxTopTag.SelectedIndex = 0
-        self.comboBoxBottomTag.SelectedIndex = 0
-        self.comboBoxBothTag.SelectedIndex = 0
+        for tag_title in sorted(tags.keys()):  # fill combo box
+            self.comboTag.Items.Add(tag_title)
+        self.comboTag.SelectedIndex = 0  # preselect first element
+    
+    def get_selection(self):
+        """Return the currently selected item."""
+        return self.comboTag.SelectedItem
 
 
 if __name__ == "__main__":
