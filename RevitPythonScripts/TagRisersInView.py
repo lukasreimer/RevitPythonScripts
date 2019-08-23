@@ -1,4 +1,5 @@
 """Tag all vertical risers in current view."""
+# TODO: investigate Transformation stuff messing up elevation / point comparisons
 
 import itertools
 import clr
@@ -41,8 +42,8 @@ def main():
 
         # STEP 2: Filter all pipes crossing upper and lower view range boundary
         top, bottom = top_and_bottom_elevation(doc, view)  
-        print("Top boundary elevation is {0} ft = {1} m".format(top, top*0.3048))
-        print("Bottom boundary elevation is {0} ft = {1} m".format(bottom, bottom*0.3048))
+        print("Top boundary elevation is {hf} ft = {hm} m".format(hf=top, hm=top*0.3048))
+        print("Bottom boundary elevation is {hf} ft = {hm} m".format(hf=bottom, hm=bottom*0.3048))
         
         upper_pipes = [pipe for pipe in vertical_pipes if cuts_top_only(pipe, top, bottom)]
         lower_pipes = [pipe for pipe in vertical_pipes if cuts_bottom_only(pipe, top, bottom)]
@@ -78,7 +79,7 @@ def main():
             try:
                 for pipe in itertools.chain(upper_pipes, lower_pipes, both_pipes):
                     point = pipe_location(pipe, top)
-                    new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), True, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
+                    new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
                     new_tag.ChangeTypeId(selected_tag.Id)
             except Exception as ex:
                 print("Exception:\n {0}".format(ex))
@@ -87,9 +88,13 @@ def main():
                 transaction.Commit()
                 print("Done.")
         else:  # result != swf.DialogResult.OK
-            print("No link selected, nothing to do.")
+            print("No tag selected, nothing to do.")
     else:  # type(view) != dbViewPlan
         print("Currently active view is not a plan view!")
+        dialog = ui.TaskDialog(title="Tag Risers in View")
+        dialog.MainInstruction = "No plan view selected!"
+        dialog.MainContent = "Please make sure to have a plan view active before running this command."
+        result = dialog.Show()
 
 # Helpers:
 def is_vertical(pipe, tolerance=1.0e-6):
@@ -128,7 +133,7 @@ def cuts_top_only(pipe, top, bottom):
     high = max(point1.Z, point2.Z)
     low = min(point1.Z, point2.Z)
     if high >= top and top >= low >= bottom:
-        print("cutting top: high = {h}, low = {l}".format(h=high, l=low))
+        print("cutting top: high = {hf} ft = {hm} m, low = {lf} ft = {lm} m".format(hf=high, hm=high*0.3048, lf=low, lm=low*0.3048))
         return True
     return False
 
@@ -141,7 +146,7 @@ def cuts_bottom_only(pipe, top, bottom):
     high = max(point1.Z, point2.Z)
     low = min(point1.Z, point2.Z)
     if low <= bottom and bottom <= high <= top:
-        print("cutting bottom: high = {h}, low = {l}".format(h=high, l=low))
+        print("cutting top: high = {hf} ft = {hm} m, low = {lf} ft = {lm} m".format(hf=high, hm=high*0.3048, lf=low, lm=low*0.3048))
         return True
     return False
 
@@ -154,7 +159,7 @@ def cuts_top_and_bottom(pipe, top, bottom):
     high = max(point1.Z, point2.Z)
     low = min(point1.Z, point2.Z)
     if high >= top and bottom >= low:
-        print("cutting both: high = {h}, low = {l}".format(h=high, l=low))
+        print("cutting top: high = {hf} ft = {hm} m, low = {lf} ft = {lm} m".format(hf=high, hm=high*0.3048, lf=low, lm=low*0.3048))
         return True
     return False
 
