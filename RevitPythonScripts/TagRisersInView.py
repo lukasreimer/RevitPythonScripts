@@ -41,8 +41,9 @@ def main():
 
         # STEP 2: Filter all pipes crossing upper and lower view range boundary
         top, bottom = top_and_bottom_elevation(doc, view)  
-        print("Top boundary elevation is {0} ft = {1} m".format(top, top/0.3048))
-        print("Bottom boundary elevation is {0} ft = {1} m".format(bottom, bottom/0.3048))
+        print("Top boundary elevation is {0} ft = {1} m".format(top, top*0.3048))
+        print("Bottom boundary elevation is {0} ft = {1} m".format(bottom, bottom*0.3048))
+        
         upper_pipes = [pipe for pipe in vertical_pipes if cuts_top_only(pipe, top, bottom)]
         lower_pipes = [pipe for pipe in vertical_pipes if cuts_bottom_only(pipe, top, bottom)]
         both_pipes =[pipe for pipe in vertical_pipes if cuts_top_and_bottom(pipe, top, bottom)]
@@ -93,31 +94,26 @@ def main():
 # Helpers:
 def is_vertical(pipe, tolerance=1.0e-6):
     """Check if a pipe is vertical."""
-    curve = pipe.Location.Curve
-    start = curve.GetEndPoint(0)
-    end = curve.GetEndPoint(1)
-    dz = abs(start.Z - end.Z)
-    if dz > tolerance:
-        dx = abs(start.X - end.X)
-        dy = abs(start.X - end.X)
+    assert pipe.ConnectorManager.Connectors.Size == 2
+    point1 = pipe.ConnectorManager.Lookup(0).Origin
+    point2 = pipe.ConnectorManager.Lookup(1).Origin
+    dz = abs(point1.Z - point2.Z)
+    if dz > 0:
+        dx = abs(point1.X - point2.X)
+        dy = abs(point1.X - point2.X)
         if dx < tolerance and dy < tolerance:
             return True
     return False
 
-
 def top_and_bottom_elevation(doc, view):
     """Extract top and bottom elevation of a plan view."""
     view_range = view.GetViewRange()
-    # get clip plane ids
     top_plane = view_range.GetLevelId(db.PlanViewPlane.TopClipPlane)
     bottom_plane = view_range.GetLevelId(db.PlanViewPlane.BottomClipPlane)
-    # get clip plane levels
     top_level = doc.GetElement(top_plane)
     bottom_level = doc.GetElement(bottom_plane)
-    # get clip plane offsets
     top_offset = view_range.GetOffset(db.PlanViewPlane.TopClipPlane)
     bottom_offset = view_range.GetOffset(db.PlanViewPlane.BottomClipPlane)
-    # calculate clip plane elevations
     top_elevation = top_level.Elevation + top_offset
     bottom_elevation = bottom_level.Elevation + bottom_offset
     assert top_elevation >= bottom_elevation
@@ -126,36 +122,39 @@ def top_and_bottom_elevation(doc, view):
 
 def cuts_top_only(pipe, top, bottom):
     """Checks if the pipe only intersects the top elevation."""
-    curve = pipe.Location.Curve
-    start = curve.GetEndPoint(0)
-    end = curve.GetEndPoint(1)
-    high = max(start.Z, end.Z)
-    low = min(start.Z, end.Z)
+    assert pipe.ConnectorManager.Connectors.Size == 2
+    point1 = pipe.ConnectorManager.Lookup(0).Origin
+    point2 = pipe.ConnectorManager.Lookup(1).Origin
+    high = max(point1.Z, point2.Z)
+    low = min(point1.Z, point2.Z)
     if high >= top and top >= low >= bottom:
+        print("cutting top: high = {h}, low = {l}".format(h=high, l=low))
         return True
     return False
 
 
 def cuts_bottom_only(pipe, top, bottom):
     """Checks if the pipe only intersects the botom elevation."""
-    curve = pipe.Location.Curve
-    start = curve.GetEndPoint(0)
-    end = curve.GetEndPoint(1)
-    high = max(start.Z, end.Z)
-    low = min(start.Z, end.Z)
+    assert pipe.ConnectorManager.Connectors.Size == 2
+    point1 = pipe.ConnectorManager.Lookup(0).Origin
+    point2 = pipe.ConnectorManager.Lookup(1).Origin
+    high = max(point1.Z, point2.Z)
+    low = min(point1.Z, point2.Z)
     if low <= bottom and bottom <= high <= top:
+        print("cutting bottom: high = {h}, low = {l}".format(h=high, l=low))
         return True
     return False
 
 
 def cuts_top_and_bottom(pipe, top, bottom):
     """Checks if the pipe intersects both elevations."""
-    curve = pipe.Location.Curve
-    start = curve.GetEndPoint(0)
-    end = curve.GetEndPoint(1)
-    high = max(start.Z, end.Z)
-    low = min(start.Z, end.Z)
+    assert pipe.ConnectorManager.Connectors.Size == 2
+    point1 = pipe.ConnectorManager.Lookup(0).Origin
+    point2 = pipe.ConnectorManager.Lookup(1).Origin
+    high = max(point1.Z, point2.Z)
+    low = min(point1.Z, point2.Z)
     if high >= top and bottom >= low:
+        print("cutting both: high = {h}, low = {l}".format(h=high, l=low))
         return True
     return False
 
