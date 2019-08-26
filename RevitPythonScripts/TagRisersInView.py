@@ -14,7 +14,7 @@ import System.Windows.Forms as swf
 import System.Drawing as sd
 
 __name = "TagRisersInView.py"
-__version = "0.1a"
+__version = "1.0b"
 
 
 def main():
@@ -135,7 +135,7 @@ def cuts_top_only(pipe, top, bottom):
     high = max(point1.Z, point2.Z)
     low = min(point1.Z, point2.Z)
     if high >= top and top >= low >= bottom:
-        print("cutting top: high = {hf} ft = {hm} m, low = {lf} ft = {lm} m".format(hf=high, hm=high*0.3048, lf=low, lm=low*0.3048))
+        #print("cutting top: high = {hf} ft = {hm} m, low = {lf} ft = {lm} m".format(hf=high, hm=high*0.3048, lf=low, lm=low*0.3048))
         return True
     return False
 
@@ -148,7 +148,7 @@ def cuts_bottom_only(pipe, top, bottom):
     high = max(point1.Z, point2.Z)
     low = min(point1.Z, point2.Z)
     if low <= bottom and bottom <= high <= top:
-        print("cutting top: high = {hf} ft = {hm} m, low = {lf} ft = {lm} m".format(hf=high, hm=high*0.3048, lf=low, lm=low*0.3048))
+        #print("cutting top: high = {hf} ft = {hm} m, low = {lf} ft = {lm} m".format(hf=high, hm=high*0.3048, lf=low, lm=low*0.3048))
         return True
     return False
 
@@ -161,7 +161,7 @@ def cuts_top_and_bottom(pipe, top, bottom):
     high = max(point1.Z, point2.Z)
     low = min(point1.Z, point2.Z)
     if high >= top and bottom >= low:
-        print("cutting top: high = {hf} ft = {hm} m, low = {lf} ft = {lm} m".format(hf=high, hm=high*0.3048, lf=low, lm=low*0.3048))
+        #print("cutting top: high = {hf} ft = {hm} m, low = {lf} ft = {lm} m".format(hf=high, hm=high*0.3048, lf=low, lm=low*0.3048))
         return True
     return False
 
@@ -256,6 +256,7 @@ class TagSelectionForm(swf.Form):
         self.gridLayout.PerformLayout()
         self.buttonLayout.ResumeLayout(False)
         self.ResumeLayout(False)
+        self.StartPosition = swf.FormStartPosition.CenterScreen
     
     def populate_combo_boxes(self, tags):
         """Populate the combo boxes with tag names."""
@@ -269,6 +270,6 @@ class TagSelectionForm(swf.Form):
 
 
 if __name__ == "__main__":
-    # __window__.Hide()
+    __window__.Hide()
     main()
-    # __window__.Close()
+    __window__.Close()
