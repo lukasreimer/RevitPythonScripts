@@ -20,9 +20,9 @@ def main():
 
 	# STEP 1: Get all the tags in the view
 	tags = db.FilteredElementCollector(doc, view.Id)\
-				.OfCategory(db.BuiltInCategory.OST_PipeTags)\
-				.WhereElementIsNotElementType()\
-				.ToElements()
+			 .OfCategory(db.BuiltInCategory.OST_PipeTags)\
+			 .WhereElementIsNotElementType()\
+			 .ToElements()
 	#print(tags)
 
 	# STEP 2: Override tag color based on host system type color
@@ -32,11 +32,12 @@ def main():
 		for tag in tags:
 			host = tag.GetTaggedLocalElement()
 			system = host.MEPSystem
-			system_type = doc.GetElement(system.GetTypeId())
-			color = system_type.LineColor
-			override = db.OverrideGraphicSettings()
-			override.SetProjectionLineColor(color)
-			view.SetElementOverrides(tag.Id, override)
+			if system:
+				system_type = doc.GetElement(system.GetTypeId())
+				color = system_type.LineColor
+				override = db.OverrideGraphicSettings()
+				override.SetProjectionLineColor(color)
+				view.SetElementOverrides(tag.Id, override)
 	except Exception as ex:
 		print(ex)
 		transaction.RollBack()
