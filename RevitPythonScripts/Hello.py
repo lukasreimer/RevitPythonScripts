@@ -1,4 +1,14 @@
-"""Simple script just saying hello from Python."""
+"""Simple script just saying hello from Python.
+
+Installation:
+1) Create Hello.py (Python script) and Hello.xml (RPS addin manifest)
+2) Deploy RPS Addin from RPS ribbon button "Deploy RpsAddin", select Hello.xml
+    --> generates "Output_Hello/" folder with Hello.dll and other DLLs
+3) Move outputs to desired storage location
+    --> e.g. C:\Users\<USERNAME>\AppData\Roaming\Autodesk\Revit\Addins\2018\Hello
+4) Create Hello.addin (Revit addin manifest) pointing to storage location
+    --> store at C:\Users\<USERNAME>\AppData\Roaming\Autodesk\Revit\Addins\2018
+"""
 
 import clr
 clr.AddReference('RevitAPI')

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <RevitAddIns>
   <AddIn Type="Application">
-    <Name>Hello RPS</Name>
-    <Assembly>C:\Users\lreimer\OneDrive\Documents\GitHub\RevitPythonScripts\RevitPythonScripts\Output_HelloRpsAddin\Hello.dll</Assembly>
+    <Name>Hello</Name>
+    <Assembly>C:\Users\lreimer\OneDrive\Documents\GitHub\RevitPythonScripts\RevitPythonScripts\Output_Hello\Hello.dll</Assembly>
     <AddInId>AA683DAB-43F9-4DC7-8ABB-238D30E4B28E</AddInId>
-    <FullClassName>Hello RPS</FullClassName>
+    <FullClassName>Hello</FullClassName>
     <VendorId>LR</VendorId>
   </AddIn>
 </RevitAddIns>
