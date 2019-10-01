@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8">
+<RpsAddin>
+    <RibbonPanel text="Hello RPS">
+        <PushButton text="Hello" src="Hello.py" />
+    </RibbonPanel>
+</RpsAddin>
