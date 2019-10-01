@@ -13,6 +13,16 @@ import System.Drawing as sd
 __name = "TagRisersInViewAdvanced.py"
 __version = "0.1a"
 
+tag_family_name = "BHE_DE_PipeTag_FlowArrow"
+tags_to_use = {  # hard coded tag names to use
+    "Steigleitung": tag_family_name + " - Steigleitung",
+    "Fallleitung": tag_family_name + " - Fallleitung",
+    "VonOben": tag_family_name + " - VonOben",
+    "NachOben": tag_family_name + " - NachOben",
+    "VonUnten": tag_family_name + " - VonUnten",
+    "NachUnten": tag_family_name + " - NachUnten",
+}
+
 
 def main():
     """Main Script. """
@@ -37,10 +47,15 @@ def main():
         tag_type_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_NAME_PARAM).AsString()
         full_tag_name = "{f_name} - {t_name}".format(f_name=tag_family_name, t_name=tag_type_name)
         tags[full_tag_name] = tag_type
-    print(tags)
+    #print(tags)
 
-    # TODO STEP 2: Setup tag types to use
-
+    # TODO STEP 2: Check if setup tags actually exist in project
+    all_tags_available = True
+    for tag_name in tags_to_use.values():
+        if not tag_name in tags:
+            print(tag_name + " not in project!!!")
+            all_tags_available = False
+    print(all_tags_available)  # TODO: continue here!
 
     print("Current view is: '{v}' {t}".format(v=view.Name, t=type(view)))
     if type(view) is db.ViewPlan:
