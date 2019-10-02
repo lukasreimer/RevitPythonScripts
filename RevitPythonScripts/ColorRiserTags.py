@@ -1,12 +1,17 @@
-"""Color all pipe tags based on the color of the host's pipe system type."""
-# TODO: add reset overrides to all tags to make color changes possible
+"""Color all pipe tags based on the color of the host's pipe system type.
+
+This script colors pipe riser tags based on the system override color of the
+tagged pipe.
+"""
 
 import clr
-clr.AddReference("RevitAPI")
+clr.AddReference('RevitAPI')
+clr.AddReference('RevitAPIUI')
 import Autodesk.Revit.DB as db
+import Autodesk.Revit.UI as ui
 
 __name = "ColorRiserTags.py"
-__version = "0.1a"
+__version = "0.1b"
 
 
 def main():
@@ -36,17 +41,20 @@ def main():
 				system_type = doc.GetElement(system.GetTypeId())
 				color = system_type.LineColor
 				override = db.OverrideGraphicSettings()
+				view.SetElementOverrides(tag.Id, override)  # reset to default
 				override.SetProjectionLineColor(color)
 				view.SetElementOverrides(tag.Id, override)
 	except Exception as ex:
 		print(ex)
 		transaction.RollBack()
+		return ui.Result.Failed
 	else:
 		transaction.Commit()
 		print("Done.")
+		return ui.Result.Succeeded
 
 
 if __name__ == "__main__":
 	__window__.Hide()
-	main()
+	__result = main()
 	__window__.Close()

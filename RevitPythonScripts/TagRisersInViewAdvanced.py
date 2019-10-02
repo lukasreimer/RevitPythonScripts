@@ -1,4 +1,13 @@
-"""Tag all vertical risers in current view with the according symbol."""
+"""Tag all vertical risers in current view with the according symbol.
+
+This script is finding all vertical pipes in the current plan view and
+categorizes them based on flow (if available) and location. If the flow
+nformation is not available on a pipe the script assumes downward flow as a
+default.
+After categorization the script places pipe riser tags at the pipes based on the
+acquired information. It therefor uses a hardcoded mapping of categories to
+annotation symbol family types.
+"""
 
 import clr
 clr.AddReference('RevitAPI')
@@ -11,7 +20,7 @@ import System.Windows.Forms as swf
 import System.Drawing as sd
 
 __name = "TagRisersInViewAdvanced.py"
-__version = "0.1a"
+__version = "0.1b"
 
 tag_family_name = "BHE_DE_PipeTag_FlowArrow"
 tags_to_use = {  # hard coded tag names to use
@@ -30,9 +39,7 @@ def main():
     print("Running {fname} version {ver}...".format(fname=__name, ver=__version))
 
     # STEP 0: Setup
-    app = __revit__.Application
     doc = __revit__.ActiveUIDocument.Document
-    uidoc = __revit__.ActiveUIDocument
     view = doc.ActiveView
 
     # STEP 1: Get all available Pipe Tags in the project
@@ -53,9 +60,9 @@ def main():
     all_tags_available = True
     for tag_name in tags_to_use.values():
         if not tag_name in tags:
-            print(tag_name + " not in project!!!")
+            print(tag_name + " not available!")
             all_tags_available = False
-    print(all_tags_available)
+    # print(all_tags_available)
     if not all_tags_available:
         print("Not all required tags are available in the project! See above.")
         return ui.Result.Failed
@@ -83,6 +90,7 @@ def main():
     print("Bottom boundary elevation is {0} ft".format(bottom))
 
     # STEP 7: Categorize pipes according to location and flow
+    print("Categorizing vertical pipes...")
     categorized_pipes = categorize_pipes(vertical_pipes, top, bottom)
     for category, pipes in categorized_pipes.items():
         print("Found {num} pipes in category '{cat}'".format(num=len(pipes), cat=category))
