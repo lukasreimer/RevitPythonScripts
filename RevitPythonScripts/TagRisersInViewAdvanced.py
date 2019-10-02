@@ -82,13 +82,7 @@ def main():
     print("Top boundary elevation is {0} ft".format(top))
     print("Bottom boundary elevation is {0} ft".format(bottom))
 
-     # STEP 7: Categorize pipes according to location and flow
-    #upper_pipes = [pipe for pipe in vertical_pipes if cuts_top_only(pipe, top, bottom)]
-    #lower_pipes = [pipe for pipe in vertical_pipes if cuts_bottom_only(pipe, top, bottom)]
-    #both_pipes =[pipe for pipe in vertical_pipes if cuts_top_and_bottom(pipe, top, bottom)]
-    #print("Found {num} pipes crossing upper boundary only.".format(num=len(upper_pipes)))
-    #print("Found {num} pipes crossing lower boundary only.".format(num=len(lower_pipes)))
-    #print("Found {num} pipes crossing both boundaries.".format(num=len(both_pipes)))
+    # STEP 7: Categorize pipes according to location and flow
     categorized_pipes = categorize_pipes(vertical_pipes, top, bottom)
     for category, pipes in categorized_pipes.items():
         print("Found {num} pipes in category '{cat}'".format(num=len(pipes), cat=category))
@@ -99,27 +93,14 @@ def main():
     transaction = db.Transaction(doc)
     transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
     try:
-        # for pipe in upper_pipes:
-        #     point = pipe_location(pipe, top)
-        #     new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
-        #     new_tag.ChangeTypeId(selected_top_tag.Id)
-        # for pipe in lower_pipes:
-        #     point = pipe_location(pipe, bottom)
-        #     new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
-        #     new_tag.ChangeTypeId(selected_bottom_tag.Id)
-        # for pipe in both_pipes:
-        #     point = pipe_location(pipe, top)
-        #     new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
-        #     new_tag.ChangeTypeId(selected_both_tag.Id)
-        pass  # TODO
         for category, pipes in categorized_pipes.items():
-            if not category == "Uncategorized":
-                tag_type_id = tags[tags_to_use[category]].Id
-                for pipe in pipes:
-                    point = pipe_location(pipe, top)
-                    new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
-                    new_tag.ChangeTypeId(tag_type_id)
-
+            if  category == "Uncategorized":
+                continue
+            tag_type_id = tags[tags_to_use[category]].Id
+            for pipe in pipes:
+                point = pipe_location(pipe, top)
+                new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
+                new_tag.ChangeTypeId(tag_type_id)
     except Exception as ex:
         print("Exception:\n {0}".format(ex))
         transaction.RollBack()
@@ -132,8 +113,10 @@ def main():
 
 # Helpers:
 
+# TODO: test intensively!
 def categorize_pipes(vertical_pipes, top, bottom):
     """Categorize vertical pipes based on location in the view and flow."""
+    # TODO: add customizable defaulting behaviour
     categorized_pipes = {
         "Steigleitung": [],
         "Fallleitung": [],
@@ -144,13 +127,11 @@ def categorize_pipes(vertical_pipes, top, bottom):
         "Uncategorized": [],
     }
     for pipe in vertical_pipes:
-        print("checking pipe {0} (#{1})".format(pipe, pipe.Id))
-
+        #print("checking pipe {0} (#{1})".format(pipe, pipe.Id))
         connector_set = pipe.ConnectorManager.Connectors
         connectors = [c for c in connector_set.GetEnumerator()]
         assert len(connectors) == 2
-        print(connectors)
-        
+        #print(connectors)
         if not any([c.Direction == db.FlowDirectionType.Bidirectional for c in connectors]):
             print("no connector is bidirectional")
             # start = inflow, end = outflow connector
@@ -159,11 +140,10 @@ def categorize_pipes(vertical_pipes, top, bottom):
             print("some connector is bidirectional")
             # start = lower, end = higher connector
             start, end = get_high_low(connectors)
-        print("start = {}".format(start))
-        print("end = {}".format(end))
-
-        if start >= end:
-            print("pipe going down")
+        #print("start = {}".format(start))
+        #print("end = {}".format(end))
+        if start >= end:  # --> pipe going down
+            #print("pipe going down")
             if start >= top and bottom >= end:
                 categorized_pipes["Fallleitung"].append(pipe)
             elif start >= top and top >= end >= bottom:
@@ -172,8 +152,8 @@ def categorize_pipes(vertical_pipes, top, bottom):
                 categorized_pipes["NachUnten"].append(pipe)
             else:  # pipe does not extend out of the view range
                 categorized_pipes["Uncategorized"].append(pipe)
-        else:  # start < end
-            print("pipe going up")
+        else:  # start < end --> pipe going up
+            #print("pipe going up")
             if end >= top and bottom >= start:
                 categorized_pipes["Steigleitung"].append(pipe)
             elif end >= top and top >= start >= bottom:
@@ -181,8 +161,7 @@ def categorize_pipes(vertical_pipes, top, bottom):
             elif top >= end >= bottom and bottom >= start:
                 categorized_pipes[""].append(pipe)
             else:  # pipe does not extend out of the view range
-                categorized_pipes["Uncategorized"].append(pipe)
-            
+                categorized_pipes["Uncategorized"].append(pipe) 
     return categorized_pipes
 
 def get_in_out(connectors):
@@ -220,12 +199,6 @@ def get_points(pipe):
     end = curve.GetEndPoint(1)
     return start, end
 
-# def get_high_low(first, second):
-#     """Get the high and the low point from two arbitrary points."""
-#     high = max(first.Z, second.Z)
-#     low = min(first.Z, second.Z)
-#     return high, low
-
 def is_vertical(pipe, tolerance=1.0e-6):
     """Check if a pipe is vertical (within the given tolerance)."""
     start, end = get_points(pipe)
@@ -240,41 +213,16 @@ def is_vertical(pipe, tolerance=1.0e-6):
 def top_and_bottom_elevation(doc, view):
     """Extract top and bottom elevation of a plan view."""
     view_range = view.GetViewRange()
-    # get clip plane ids
     top_plane = view_range.GetLevelId(db.PlanViewPlane.TopClipPlane)
     bottom_plane = view_range.GetLevelId(db.PlanViewPlane.BottomClipPlane)
-    # get clip plane levels
     top_level = doc.GetElement(top_plane)
     bottom_level = doc.GetElement(bottom_plane)
-    # get clip plane offsets
     top_offset = view_range.GetOffset(db.PlanViewPlane.TopClipPlane)
     bottom_offset = view_range.GetOffset(db.PlanViewPlane.BottomClipPlane)
-    # calculate clip plane elevations
     top_elevation = top_level.Elevation + top_offset
     bottom_elevation = bottom_level.Elevation + bottom_offset
     assert top_elevation >= bottom_elevation
     return top_elevation, bottom_elevation
-
-# def cuts_top_only(pipe, top, bottom):
-#     """Checks if the pipe only intersects the top elevation."""
-#     high, low = get_high_low(*get_points(pipe))
-#     if high >= top and top >= low >= bottom:
-#         return True
-#     return False
-
-# def cuts_bottom_only(pipe, top, bottom):
-#     """Checks if the pipe only intersects the botom elevation."""
-#     high, low = get_high_low(*get_points(pipe))
-#     if low <= bottom and bottom <= high <= top:
-#         return True
-#     return False
-
-# def cuts_top_and_bottom(pipe, top, bottom):
-#     """Checks if the pipe intersects both elevations."""
-#     high, low = get_high_low(*get_points(pipe))
-#     if high >= top and bottom >= low:
-#         return True
-#     return False
 
 def pipe_location(pipe, elevation):
     """Returns the intersetion point of the pipe with the elevation."""
