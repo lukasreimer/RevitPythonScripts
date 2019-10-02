@@ -95,7 +95,7 @@ def main():
     try:
         for category, pipes in categorized_pipes.items():
             if  category == "Uncategorized":
-                continue
+                continue  # don't tag pipes not crossing the view range
             tag_type_id = tags[tags_to_use[category]].Id
             for pipe in pipes:
                 point = pipe_location(pipe, top)
@@ -133,11 +133,11 @@ def categorize_pipes(vertical_pipes, top, bottom):
         assert len(connectors) == 2
         #print(connectors)
         if not any([c.Direction == db.FlowDirectionType.Bidirectional for c in connectors]):
-            print("no connector is bidirectional")
+            #print("no connector is bidirectional")
             # start = inflow, end = outflow connector
             start, end = get_in_out(connectors)
         else:
-            print("some connector is bidirectional")
+            #print("some connector is bidirectional")
             # start = lower, end = higher connector
             start, end = get_high_low(connectors)
         #print("start = {}".format(start))
@@ -159,7 +159,7 @@ def categorize_pipes(vertical_pipes, top, bottom):
             elif end >= top and top >= start >= bottom:
                 categorized_pipes["NachOben"].append(pipe)
             elif top >= end >= bottom and bottom >= start:
-                categorized_pipes[""].append(pipe)
+                categorized_pipes["VonUnten"].append(pipe)
             else:  # pipe does not extend out of the view range
                 categorized_pipes["Uncategorized"].append(pipe) 
     return categorized_pipes
