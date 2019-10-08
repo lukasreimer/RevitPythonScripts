@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<RpsAddin>
+    <RibbonPanel text="RiserTagging">
+        <PushButton text="Tag" src="TagRisersInViewAdvanced.py" />
+        <PushButton text="Color" src="ColorRiserTags.py" />
+    </RibbonPanel>
+</RpsAddin>
