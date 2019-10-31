@@ -18,6 +18,7 @@ __version = "1.0b"
 CHECK = "✔"
 ERROR = "✘"
 
+
 def main():
     """Main Script."""
 
