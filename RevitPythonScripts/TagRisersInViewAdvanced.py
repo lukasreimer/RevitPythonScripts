@@ -242,6 +242,6 @@ def pipe_location(pipe, elevation):
 
 
 if __name__ == "__main__":
-    # __window__.Hide()
+    __window__.Hide()
     __result__ == main()
-    # __window__.Close()
+    __window__.Close()
