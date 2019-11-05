@@ -9,6 +9,8 @@ acquired information. It therefor uses a hardcoded mapping of categories to
 annotation symbol family types.
 """
 
+from __future__ import print_function
+import sys
 import clr
 clr.AddReference('RevitAPI')
 clr.AddReference('RevitAPIUI')
@@ -20,9 +22,10 @@ import System.Windows.Forms as swf
 import System.Drawing as sd
 
 __name = "TagRisersInViewAdvanced.py"
-__version = "0.1b"
+__version = "0.2b"
 
 # Constants
+FEET_TO_METER = 0.3048  # meter/feet
 TAG_FAMILY_NAME = "BHE_DE_PipeTag_FlowArrow"
 TAG_TYPE_NAME_MAPPING = {  # hard coded tag names to use
     "Steigleitung": TAG_FAMILY_NAME + " - Steigleitung",
@@ -37,18 +40,19 @@ TAG_TYPE_NAME_MAPPING = {  # hard coded tag names to use
 def main():
     """Main Script. """
     
-    print("Running {fname} version {ver}...".format(fname=__name, ver=__version))
+    print("🐍 Running {fname} version {ver}...".format(fname=__name, ver=__version))
 
     # STEP 0: Setup
     doc = __revit__.ActiveUIDocument.Document
     view = doc.ActiveView
 
     # STEP 1: Get all available Pipe Tags in the project
-    print("Getting all available pipe tags from the model...")
+    print("Getting all available pipe tags from the model...", end="")
     tag_types = db.FilteredElementCollector(doc)\
                   .OfCategory(db.BuiltInCategory.OST_PipeTags)\
                   .WhereElementIsElementType()\
                   .ToElements()
+    print("✔")
     tags = {}  # tag_title: tag_type
     for tag_type in tag_types:
         tag_family_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_FAMILY_NAME_PARAM).AsString()
@@ -57,45 +61,53 @@ def main():
         tags[full_tag_name] = tag_type
 
     # STEP 2: Check if setup tags actually exist in project
+    print("Checking if expected tag family (and types) exist(s)... ", end="")
     all_tags_available = True
     for tag_name in TAG_TYPE_NAME_MAPPING.values():
         if not tag_name in tags:
-            print(tag_name + " not available!")
+            print("✘ Error: {tag_name} not available!".format(tag_name=tag_name))
             all_tags_available = False
     if not all_tags_available:
-        print("Not all required tags are available in the project! See above.")
+        print("✘ Error: Not all required tags are available in the project! See above.")
         return ui.Result.Failed
+    print("✔")
 
     # STEP 3: Check if the current view a plan view
-    print("Current view is: '{v}' {t}".format(v=view.Name, t=type(view)))
+    print("🛈 Current view is: '{v}' {t}".format(v=view.Name, t=type(view)))
     if type(view) is not db.ViewPlan:
-        print("Currently active view is not a plan view!")
+        print("✘ Error: Currently active view is not a plan view!")
         return ui.Result.Failed
             
     # STEP 4: Get all pipes in the view
-    print("Getting all pipes from the currently active view...")
+    print("Getting all pipes from the currently active view... ", end="")
     pipes = db.FilteredElementCollector(doc, view.Id)\
                 .OfCategory(db.BuiltInCategory.OST_PipeCurves)\
                 .ToElements()
+    print("✔")
+    print("  ➜ Found {num} pipes in the currently active view.".format(num=len(pipes)))
 
     # STEP 5: Filter for vertical pipes
-    print("Found {num} pipes in the currently active view.".format(num=len(pipes)))
+    print("Filtering vertical pipes... ", end="")
     vertical_pipes = [pipe for pipe in pipes if is_vertical(pipe)]
-    print("Found {num} vertical pipes in the view.".format(num=len(vertical_pipes)))
+    print("✔")
+    print("  ➜ Found {num} vertical pipes in the view.".format(num=len(vertical_pipes)))
 
     # STEP 6: Get the top and bottom view range elevations
-    top, bottom = top_and_bottom_elevation(doc, view)  
-    print("Top boundary elevation is {0} ft".format(top))
-    print("Bottom boundary elevation is {0} ft".format(bottom))
+    print("Finding views boundary elevations... ", end="")
+    top, bottom = top_and_bottom_elevation(doc, view)
+    print("✔")
+    print("  ➜ Top boundary elevation is {0} ft (= {1} m)".format(top, top*FEET_TO_METER))
+    print("  ➜ Bottom boundary elevation is {0} ft (= {1} m)".format(bottom, bottom*FEET_TO_METER))
 
     # STEP 7: Categorize pipes according to location and flow
-    print("Categorizing vertical pipes...")
+    print("Categorizing vertical pipes... ", end="")
     categorized_pipes, _ = categorize_pipes(vertical_pipes, top, bottom)
+    print("✔")
     for category, pipes in categorized_pipes.items():
-        print("Found {num} pipes in category '{cat}'".format(num=len(pipes), cat=category))
+        print("  ➜ Found {num} pipes in category '{cat}'".format(num=len(pipes), cat=category))
 
     # STEP 8: Place tags at the pipes
-    print("Creating tags...")
+    print("Creating tags... ", end="")
     transaction = db.Transaction(doc)
     transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
     try:
@@ -106,12 +118,13 @@ def main():
                 new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
                 new_tag.ChangeTypeId(tag_type_id)
     except Exception as ex:
-        print("Exception:\n {0}".format(ex))
+        print("\n✘ Exception:\n {ex}".format(ex=ex))
         transaction.RollBack()
         return ui.Result.Failed
     else:
         transaction.Commit()
-        print("Done.")
+        print("✔")
+        print("Done. 😊")
         return ui.Result.Succeeded
 
 
@@ -223,6 +236,6 @@ def pipe_location(pipe, elevation):
 
 
 if __name__ == "__main__":
-    __window__.Hide()
+    #__window__.Hide()
     __result__ == main()
-    __window__.Close()
+    #__window__.Close()
