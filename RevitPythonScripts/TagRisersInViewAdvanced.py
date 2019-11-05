@@ -22,14 +22,15 @@ import System.Drawing as sd
 __name = "TagRisersInViewAdvanced.py"
 __version = "0.1b"
 
-tag_family_name = "BHE_DE_PipeTag_FlowArrow"
-tags_to_use = {  # hard coded tag names to use
-    "Steigleitung": tag_family_name + " - Steigleitung",
-    "Fallleitung": tag_family_name + " - Fallleitung",
-    "VonOben": tag_family_name + " - VonOben",
-    "NachOben": tag_family_name + " - NachOben",
-    "VonUnten": tag_family_name + " - VonUnten",
-    "NachUnten": tag_family_name + " - NachUnten",
+# Constants
+TAG_FAMILY_NAME = "BHE_DE_PipeTag_FlowArrow"
+TAG_TYPE_NAME_MAPPING = {  # hard coded tag names to use
+    "Steigleitung": TAG_FAMILY_NAME + " - Steigleitung",
+    "Fallleitung": TAG_FAMILY_NAME + " - Fallleitung",
+    "VonOben": TAG_FAMILY_NAME + " - VonOben",
+    "NachOben": TAG_FAMILY_NAME + " - NachOben",
+    "VonUnten": TAG_FAMILY_NAME + " - VonUnten",
+    "NachUnten": TAG_FAMILY_NAME + " - NachUnten",
 }
 
 
@@ -54,15 +55,13 @@ def main():
         tag_type_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_NAME_PARAM).AsString()
         full_tag_name = "{f_name} - {t_name}".format(f_name=tag_family_name, t_name=tag_type_name)
         tags[full_tag_name] = tag_type
-    #print(tags)
 
     # STEP 2: Check if setup tags actually exist in project
     all_tags_available = True
-    for tag_name in tags_to_use.values():
+    for tag_name in TAG_TYPE_NAME_MAPPING.values():
         if not tag_name in tags:
             print(tag_name + " not available!")
             all_tags_available = False
-    # print(all_tags_available)
     if not all_tags_available:
         print("Not all required tags are available in the project! See above.")
         return ui.Result.Failed
@@ -91,10 +90,9 @@ def main():
 
     # STEP 7: Categorize pipes according to location and flow
     print("Categorizing vertical pipes...")
-    categorized_pipes = categorize_pipes(vertical_pipes, top, bottom)
+    categorized_pipes, _ = categorize_pipes(vertical_pipes, top, bottom)
     for category, pipes in categorized_pipes.items():
         print("Found {num} pipes in category '{cat}'".format(num=len(pipes), cat=category))
-    #print(categorized_pipes)
 
     # STEP 8: Place tags at the pipes
     print("Creating tags...")
@@ -102,9 +100,7 @@ def main():
     transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
     try:
         for category, pipes in categorized_pipes.items():
-            if  category == "Uncategorized":
-                continue  # don't tag pipes not crossing the view range
-            tag_type_id = tags[tags_to_use[category]].Id
+            tag_type_id = tags[TAG_TYPE_NAME_MAPPING[category]].Id
             for pipe in pipes:
                 point = pipe_location(pipe, top)
                 new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
@@ -120,38 +116,23 @@ def main():
 
 
 # Helpers:
-
-# TODO: test intensively!
 def categorize_pipes(vertical_pipes, top, bottom):
-    """Categorize vertical pipes based on location in the view and flow."""
-    # TODO: add customizable defaulting behaviour
-    categorized_pipes = {
-        "Steigleitung": [],
-        "Fallleitung": [],
-        "VonOben": [],
-        "NachOben": [],
-        "VonUnten": [],
-        "NachUnten": [],
-        "Uncategorized": [],
-    }
+    """Categorize vertical pipes based on location in the view and flow.
+
+    Default to assuming downward flow (gravity) when no flow information is
+    available for the investigated pipe element.
+    """
+    categorized_pipes = {key: [] for key in TAG_TYPE_NAME_MAPPING.keys()}
+    uncategorized_pipes = []
     for pipe in vertical_pipes:
-        #print("checking pipe {0} (#{1})".format(pipe, pipe.Id))
         connector_set = pipe.ConnectorManager.Connectors
-        connectors = [c for c in connector_set.GetEnumerator()]
+        connectors = [connector for connector in connector_set.GetEnumerator()]
         assert len(connectors) == 2
-        #print(connectors)
-        if not any([c.Direction == db.FlowDirectionType.Bidirectional for c in connectors]):
-            #print("no connector is bidirectional")
-            # start = inflow, end = outflow connector
+        if any([connector.Direction == db.FlowDirectionType.Bidirectional for connector in connectors]):
             start, end = get_in_out(connectors)
         else:
-            #print("some connector is bidirectional")
-            # start = lower, end = higher connector
-            start, end = get_high_low(connectors)
-        #print("start = {}".format(start))
-        #print("end = {}".format(end))
-        if start >= end:  # --> pipe going down
-            #print("pipe going down")
+            start, end = get_in_out(connectors)
+        if start >= end:  # → pipe going down
             if start >= top and bottom >= end:
                 categorized_pipes["Fallleitung"].append(pipe)
             elif start >= top and top >= end >= bottom:
@@ -159,9 +140,8 @@ def categorize_pipes(vertical_pipes, top, bottom):
             elif top >= start >= bottom and bottom >= end:
                 categorized_pipes["NachUnten"].append(pipe)
             else:  # pipe does not extend out of the view range
-                categorized_pipes["Uncategorized"].append(pipe)
+                uncategorized_pipes.append(pipe)
         else:  # start < end --> pipe going up
-            #print("pipe going up")
             if end >= top and bottom >= start:
                 categorized_pipes["Steigleitung"].append(pipe)
             elif end >= top and top >= start >= bottom:
@@ -169,8 +149,8 @@ def categorize_pipes(vertical_pipes, top, bottom):
             elif top >= end >= bottom and bottom >= start:
                 categorized_pipes["VonUnten"].append(pipe)
             else:  # pipe does not extend out of the view range
-                categorized_pipes["Uncategorized"].append(pipe) 
-    return categorized_pipes
+                uncategorized_pipes.append(pipe)
+    return categorized_pipes, uncategorized_pipes
 
 def get_in_out(connectors):
     """Get the inflow and the outflow elevations from two arbitrary points."""
@@ -207,7 +187,7 @@ def get_points(pipe):
     end = curve.GetEndPoint(1)
     return start, end
 
-def is_vertical(pipe, tolerance=1.0e-6):
+def is_vertical(pipe, tolerance=1.0e-3):
     """Check if a pipe is vertical (within the given tolerance)."""
     start, end = get_points(pipe)
     dz = abs(start.Z - end.Z)
@@ -235,6 +215,7 @@ def top_and_bottom_elevation(doc, view):
 def pipe_location(pipe, elevation):
     """Returns the intersetion point of the pipe with the elevation."""
     # ! Assuming the pipe is vertical for now !
+    # TODO: implement level/pipe intersection
     curve = pipe.Location.Curve
     pipe_point = curve.GetEndPoint(0)
     point = db.XYZ(pipe_point.X, pipe_point.Y, elevation)
