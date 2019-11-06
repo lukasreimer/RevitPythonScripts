@@ -95,8 +95,9 @@ def main():
                     tag_type = doc.GetElement(tag.GetTypeId())
                     tag_family_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_FAMILY_NAME_PARAM).AsString()
                     tag_type_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_NAME_PARAM).AsString()
-                    if not tag_family_name == TAG_FAMILY_NAME:
-                        print("✘ Error: tag family {} not valid for vent tag remapping.".format(tag_family_name))
+                    if not tag_family_name == TAG_FAMILY_NAME:  # other kind of tag, dont bother
+                        continue
+                    if tag_type_name not in REMAPPING:  # tag type already good or not in remapping
                         continue
                     target = REMAPPING[tag_type_name]
                     target_type_id = tag_types_mapping[TAG_TYPE_NAME_MAPPING[target]].Id

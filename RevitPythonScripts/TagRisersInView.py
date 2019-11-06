@@ -1,8 +1,16 @@
-"""Tag all vertical risers in current view."""
-# TODO: investigate Transformation stuff messing up elevation / point comparisons
-# survey point / project base point
+"""Tag all vertical risers in current view with the according symbol.
 
-import itertools
+This script is finding all vertical pipes in the current plan view and
+categorizes them based on flow (if available) and location. If the flow
+nformation is not available on a pipe the script assumes downward flow as a
+default.
+After categorization the script places pipe riser tags at the pipes based on the
+acquired information. It therefor uses a hardcoded mapping of categories to
+annotation symbol family types.
+"""
+
+from __future__ import print_function
+import sys
 import clr
 clr.AddReference('RevitAPI')
 clr.AddReference('RevitAPIUI')
@@ -14,103 +22,194 @@ import System.Windows.Forms as swf
 import System.Drawing as sd
 
 __name = "TagRisersInView.py"
-__version = "1.0b"
+__version = "0.2b"
+
+# Constants
+FEET_TO_METER = 0.3048  # meter/feet
+TAG_FAMILY_NAME = "BHE_DE_PipeTag_FlowArrow"
+TAG_TYPE_NAME_MAPPING = {  # hard coded tag names to use
+    "Steigleitung": TAG_FAMILY_NAME + " - Steigleitung",
+    "Fallleitung": TAG_FAMILY_NAME + " - Fallleitung",
+    "VonOben": TAG_FAMILY_NAME + " - VonOben",
+    "NachOben": TAG_FAMILY_NAME + " - NachOben",
+    "VonUnten": TAG_FAMILY_NAME + " - VonUnten",
+    "NachUnten": TAG_FAMILY_NAME + " - NachUnten",
+}
 
 
 def main():
-    """Main Script."""
+    """Main Script. """
     
-    print("Running {fname} version {ver}...".format(fname=__name, ver=__version))
+    print("🐍 Running {fname} version {ver}...".format(fname=__name, ver=__version))
 
     # STEP 0: Setup
-    app = __revit__.Application
     doc = __revit__.ActiveUIDocument.Document
-    uidoc = __revit__.ActiveUIDocument
     view = doc.ActiveView
 
-    print("Current view is: '{vname}' of type {vtype}".format(vname=view.Name, vtype=type(view)))
-    if type(view) is db.ViewPlan:
-        
-        # STEP 1: Get all vertical pipes in the view
-        print("Getting all pipes from the currently active view...")
-        pipes = db.FilteredElementCollector(doc, view.Id)\
-                  .OfCategory(db.BuiltInCategory.OST_PipeCurves)\
-                  .WhereElementIsNotElementType()\
+    # STEP 1: Get all available Pipe Tags in the project
+    print("Getting all available pipe tags from the model...", end="")
+    tag_types = db.FilteredElementCollector(doc)\
+                  .OfCategory(db.BuiltInCategory.OST_PipeTags)\
+                  .WhereElementIsElementType()\
                   .ToElements()
-        print("Found {num} pipes in the currently active view.".format(num=len(pipes)))
-        vertical_pipes = [pipe for pipe in pipes if is_vertical(pipe)]
-        print("Found {num} vertical pipes in the view.".format(num=len(vertical_pipes)))
+    print("✔")
+    tags = {}  # tag_title: tag_type
+    for tag_type in tag_types:
+        tag_family_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_FAMILY_NAME_PARAM).AsString()
+        tag_type_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_NAME_PARAM).AsString()
+        full_tag_name = "{f_name} - {t_name}".format(f_name=tag_family_name, t_name=tag_type_name)
+        tags[full_tag_name] = tag_type
 
-        # STEP 2: Filter all pipes crossing upper and lower view range boundary
-        top, bottom = top_and_bottom_elevation(doc, view)  
-        print("Top boundary elevation is {hf} ft = {hm} m".format(hf=top, hm=top*0.3048))
-        print("Bottom boundary elevation is {hf} ft = {hm} m".format(hf=bottom, hm=bottom*0.3048))
-        
-        upper_pipes = [pipe for pipe in vertical_pipes if cuts_top_only(pipe, top, bottom)]
-        lower_pipes = [pipe for pipe in vertical_pipes if cuts_bottom_only(pipe, top, bottom)]
-        both_pipes =[pipe for pipe in vertical_pipes if cuts_top_and_bottom(pipe, top, bottom)]
-        print("Found {num} pipes crossing upper boundary only.".format(num=len(upper_pipes)))
-        print("Found {num} pipes crossing lower boundary only.".format(num=len(lower_pipes)))
-        print("Found {num} pipes crossing both boundaries.".format(num=len(both_pipes)))
+    # STEP 2: Check if setup tags actually exist in project
+    print("Checking if expected tag family (and types) exist(s)... ", end="")
+    all_tags_available = True
+    for tag_name in TAG_TYPE_NAME_MAPPING.values():
+        if not tag_name in tags:
+            print("✘ Error: {tag_name} not available!".format(tag_name=tag_name))
+            all_tags_available = False
+    if not all_tags_available:
+        print("✘ Error: Not all required tags are available in the project! See above.")
+        return ui.Result.Failed
+    print("✔")
 
-        # STEP 3: Get all available pipe tags in the project
-        tag_types = db.FilteredElementCollector(doc)\
-                    .OfCategory(db.BuiltInCategory.OST_PipeTags)\
-                    .WhereElementIsElementType()\
-                    .ToElements()
-        tags = {}  # {tag_title: tag_type}
-        for tag_type in tag_types:
-            tag_family_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_FAMILY_NAME_PARAM).AsString()
-            tag_type_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_NAME_PARAM).AsString()
-            full_tag_name = "{f_name} - {t_name}".format(f_name=tag_family_name, t_name=tag_type_name)
-            tags[full_tag_name] = tag_type
+    # STEP 3: Check if the current view a plan view
+    print("🛈 Current view is: '{v}' {t}".format(v=view.Name, t=type(view)))
+    if type(view) is not db.ViewPlan:
+        print("✘ Error: Currently active view is not a plan view!")
+        return ui.Result.Failed
+            
+    # STEP 4: Get all pipes in the view
+    print("Getting all pipes from the currently active view... ", end="")
+    pipes = db.FilteredElementCollector(doc, view.Id)\
+                .OfCategory(db.BuiltInCategory.OST_PipeCurves)\
+                .ToElements()
+    print("✔")
+    print("  ➜ Found {num} pipes in the currently active view.".format(num=len(pipes)))
 
-        # STEP 4: Get user selection for pipe riser tags to be applied
-        print("Please select the tags to be placed...")
-        tag_select_form = TagSelectionForm(tags=tags)
-        result = tag_select_form.ShowDialog()
-        if result == swf.DialogResult.OK:
-            selected_tag_title = tag_select_form.get_selection()
-            selected_tag = tags[selected_tag_title]
+    # STEP 5: Filter for vertical pipes
+    print("Filtering vertical pipes... ", end="")
+    vertical_pipes = [pipe for pipe in pipes if is_vertical(pipe)]
+    print("✔")
+    print("  ➜ Found {num} vertical pipes in the view.".format(num=len(vertical_pipes)))
 
-            # STEP 5: Place tags at the pipes
-            print("Creating tags...")
-            transaction = db.Transaction(doc)
-            transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
-            try:
-                for pipe in itertools.chain(upper_pipes, lower_pipes, both_pipes):
-                    point = pipe_location(pipe, top)
-                    new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
-                    new_tag.ChangeTypeId(selected_tag.Id)
-            except Exception as ex:
-                print("Exception:\n {0}".format(ex))
-                transaction.RollBack()
-            else:
-                transaction.Commit()
-                print("Done.")
-        else:  # result != swf.DialogResult.OK
-            print("No tag selected, nothing to do.")
-    else:  # type(view) != dbViewPlan
-        print("Currently active view is not a plan view!")
-        dialog = ui.TaskDialog(title="Tag Risers in View")
-        dialog.MainInstruction = "No plan view selected!"
-        dialog.MainContent = "Please make sure to have a plan view active before running this command."
-        result = dialog.Show()
+    # STEP 6: Get the top and bottom view range elevations
+    print("Finding views boundary elevations... ", end="")
+    top, bottom = top_and_bottom_elevation(doc, view)
+    print("✔")
+    print("  ➜ Top boundary elevation is {0} ft (= {1} m)".format(top, top*FEET_TO_METER))
+    print("  ➜ Bottom boundary elevation is {0} ft (= {1} m)".format(bottom, bottom*FEET_TO_METER))
+
+    # STEP 7: Categorize pipes according to location and flow
+    print("Categorizing vertical pipes... ", end="")
+    categorized_pipes, _ = categorize_pipes(vertical_pipes, top, bottom)
+    print("✔")
+    for category, pipes in categorized_pipes.items():
+        print("  ➜ Found {num} pipes in category '{cat}'".format(num=len(pipes), cat=category))
+
+    # STEP 8: Place tags at the pipes
+    print("Creating tags... ", end="")
+    transaction = db.Transaction(doc)
+    transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
+    try:
+        for category, pipes in categorized_pipes.items():
+            tag_type_id = tags[TAG_TYPE_NAME_MAPPING[category]].Id
+            for pipe in pipes:
+                point = pipe_location(pipe, top)
+                new_tag = db.IndependentTag.Create(doc, view.Id, db.Reference(pipe), False, db.TagMode.TM_ADDBY_CATEGORY, db.TagOrientation.Horizontal, point)
+                new_tag.ChangeTypeId(tag_type_id)
+    except Exception as ex:
+        print("\n✘ Exception:\n {ex}".format(ex=ex))
+        transaction.RollBack()
+        return ui.Result.Failed
+    else:
+        transaction.Commit()
+        print("✔")
+        print("Done. 😊")
+        return ui.Result.Succeeded
+
 
 # Helpers:
-def is_vertical(pipe, tolerance=1.0e-6):
-    """Check if a pipe is vertical."""
-    assert pipe.ConnectorManager.Connectors.Size == 2
-    point1 = pipe.ConnectorManager.Lookup(0).Origin
-    point2 = pipe.ConnectorManager.Lookup(1).Origin
-    dz = abs(point1.Z - point2.Z)
-    if dz > 0:
-        dx = abs(point1.X - point2.X)
-        dy = abs(point1.X - point2.X)
+def categorize_pipes(vertical_pipes, top, bottom):
+    """Categorize vertical pipes based on location in the view and flow.
+
+    Default to assuming downward flow (gravity) when no flow information is
+    available for the investigated pipe element.
+    """
+    categorized_pipes = {key: [] for key in TAG_TYPE_NAME_MAPPING.keys()}
+    uncategorized_pipes = []
+    for pipe in vertical_pipes:
+        connector_set = pipe.ConnectorManager.Connectors
+        connectors = [connector for connector in connector_set.GetEnumerator()]
+        assert len(connectors) == 2
+        if any([connector.Direction == db.FlowDirectionType.Bidirectional for connector in connectors]):
+            start, end = get_in_out(connectors)
+        else:
+            start, end = get_in_out(connectors)
+        if start >= end:  # → pipe going down
+            if start >= top and bottom >= end:
+                categorized_pipes["Fallleitung"].append(pipe)
+            elif start >= top and top >= end >= bottom:
+                categorized_pipes["VonOben"].append(pipe)
+            elif top >= start >= bottom and bottom >= end:
+                categorized_pipes["NachUnten"].append(pipe)
+            else:  # pipe does not extend out of the view range
+                uncategorized_pipes.append(pipe)
+        else:  # start < end --> pipe going up
+            if end >= top and bottom >= start:
+                categorized_pipes["Steigleitung"].append(pipe)
+            elif end >= top and top >= start >= bottom:
+                categorized_pipes["NachOben"].append(pipe)
+            elif top >= end >= bottom and bottom >= start:
+                categorized_pipes["VonUnten"].append(pipe)
+            else:  # pipe does not extend out of the view range
+                uncategorized_pipes.append(pipe)
+    return categorized_pipes, uncategorized_pipes
+
+def get_in_out(connectors):
+    """Get the inflow and the outflow elevations from two arbitrary points."""
+    assert len(connectors) >= 2
+    first = connectors[0]
+    second = connectors[1]
+    direction1 = first.Direction
+    direction2 = second.Direction
+    if direction1 == db.FlowDirectionType.In and direction2 == db.FlowDirectionType.Out:
+        inflow = first.Origin.Z
+        outflow = second.Origin.Z
+    elif direction1 == db.FlowDirectionType.Out and direction2 == db.FlowDirectionType.In:
+        inflow = second.Origin.Z
+        outflow = first.Origin.Z
+    else:  # some connector is bidirectional or both are equal, use high/low
+        inflow, outflow = get_high_low(connectors)
+    return inflow, outflow
+
+def get_high_low(connectors):
+    """Get the higher and the lower elevations from two arbitrary points."""
+    assert len(connectors) >= 2
+    first = connectors[0]
+    second = connectors[1]
+    point1 = first.Origin
+    point2 = second.Origin
+    high = max(point1.Z, point2.Z)
+    low = min(point1.Z, point2.Z)
+    return high, low
+
+def get_points(pipe):
+    """Get the start and end point of a pipe."""
+    curve = pipe.Location.Curve
+    start = curve.GetEndPoint(0)
+    end = curve.GetEndPoint(1)
+    return start, end
+
+def is_vertical(pipe, tolerance=1.0e-3):
+    """Check if a pipe is vertical (within the given tolerance)."""
+    start, end = get_points(pipe)
+    dz = abs(start.Z - end.Z)
+    if dz > tolerance:
+        dx = abs(start.X - end.X)
+        dy = abs(start.X - end.X)
         if dx < tolerance and dy < tolerance:
             return True
     return False
-
 
 def top_and_bottom_elevation(doc, view):
     """Extract top and bottom elevation of a plan view."""
@@ -126,150 +225,17 @@ def top_and_bottom_elevation(doc, view):
     assert top_elevation >= bottom_elevation
     return top_elevation, bottom_elevation
 
-
-def cuts_top_only(pipe, top, bottom):
-    """Checks if the pipe only intersects the top elevation."""
-    assert pipe.ConnectorManager.Connectors.Size == 2
-    point1 = pipe.ConnectorManager.Lookup(0).Origin
-    point2 = pipe.ConnectorManager.Lookup(1).Origin
-    high = max(point1.Z, point2.Z)
-    low = min(point1.Z, point2.Z)
-    if high >= top and top >= low >= bottom:
-        #print("cutting top: high = {hf} ft = {hm} m, low = {lf} ft = {lm} m".format(hf=high, hm=high*0.3048, lf=low, lm=low*0.3048))
-        return True
-    return False
-
-
-def cuts_bottom_only(pipe, top, bottom):
-    """Checks if the pipe only intersects the botom elevation."""
-    assert pipe.ConnectorManager.Connectors.Size == 2
-    point1 = pipe.ConnectorManager.Lookup(0).Origin
-    point2 = pipe.ConnectorManager.Lookup(1).Origin
-    high = max(point1.Z, point2.Z)
-    low = min(point1.Z, point2.Z)
-    if low <= bottom and bottom <= high <= top:
-        #print("cutting top: high = {hf} ft = {hm} m, low = {lf} ft = {lm} m".format(hf=high, hm=high*0.3048, lf=low, lm=low*0.3048))
-        return True
-    return False
-
-
-def cuts_top_and_bottom(pipe, top, bottom):
-    """Checks if the pipe intersects both elevations."""
-    assert pipe.ConnectorManager.Connectors.Size == 2
-    point1 = pipe.ConnectorManager.Lookup(0).Origin
-    point2 = pipe.ConnectorManager.Lookup(1).Origin
-    high = max(point1.Z, point2.Z)
-    low = min(point1.Z, point2.Z)
-    if high >= top and bottom >= low:
-        #print("cutting top: high = {hf} ft = {hm} m, low = {lf} ft = {lm} m".format(hf=high, hm=high*0.3048, lf=low, lm=low*0.3048))
-        return True
-    return False
-
-
 def pipe_location(pipe, elevation):
     """Returns the intersetion point of the pipe with the elevation."""
+    # ! Assuming the pipe is vertical for now !
+    # TODO: implement level/pipe intersection
     curve = pipe.Location.Curve
     pipe_point = curve.GetEndPoint(0)
     point = db.XYZ(pipe_point.X, pipe_point.Y, elevation)
-    # print("pipe location = {}".format(point))
     return point
 
 
-class TagSelectionForm(swf.Form):
-    """Link selection form."""
-
-    def __init__(self, tags):
-        """Initializer."""
-        # Instatiate widgets
-        self.gridLayout = swf.TableLayoutPanel()
-        self.buttonLayout = swf.FlowLayoutPanel()
-        self.labelTag = swf.Label()
-        self.comboTag = swf.ComboBox()
-        self.buttonCancel = swf.Button()
-        self.buttonSelect = swf.Button()
-        self.gridLayout.SuspendLayout()
-        self.buttonLayout.SuspendLayout()
-        self.SuspendLayout()
-        # Place widgets and populate them
-        self.layout_widgets()
-        self.populate_combo_boxes(tags)
-
-    def layout_widgets(self):
-        """Layout the widgets."""
-        # labelTag
-        self.labelTag.Text = "Select Riser Tag:"
-        self.labelTag.Anchor = swf.AnchorStyles.Right
-        self.labelTag.AutoSize = True
-        self.labelTag.Location = sd.Point(54, 13)
-        self.labelTag.Size = sd.Size(48, 13)
-        # comboBoxTag
-        self.comboTag.Anchor = swf.AnchorStyles.Left | swf.AnchorStyles.Right
-        self.comboTag.FormattingEnabled = False
-        self.comboTag.Location = sd.Point(108, 9)
-        self.comboTag.Size = sd.Size(268, 21)
-        # buttonCancel
-        self.buttonCancel.Text = "Cancel"
-        self.buttonCancel.DialogResult = swf.DialogResult.Cancel
-        self.buttonCancel.Location = sd.Point(290, 8)
-        self.buttonCancel.Size = sd.Size(75, 23)
-        self.buttonCancel.UseVisualStyleBackColor = True
-        # buttonSelect
-        self.buttonSelect.Text = "Select"
-        self.buttonSelect.DialogResult = swf.DialogResult.OK
-        self.buttonSelect.Location = sd.Point(209, 8)
-        self.buttonSelect.Size = sd.Size(75, 23)
-        self.buttonSelect.UseVisualStyleBackColor = True
-        # buttonLayout
-        self.buttonLayout.Dock = swf.DockStyle.Fill
-        self.buttonLayout.FlowDirection = swf.FlowDirection.RightToLeft
-        self.buttonLayout.Location = sd.Point(8, 98)
-        self.buttonLayout.Size = sd.Size(368, 45)
-        self.buttonLayout.Padding = swf.Padding(0, 5, 0, 0)
-        self.buttonLayout.Controls.Add(self.buttonCancel)
-        self.buttonLayout.Controls.Add(self.buttonSelect)
-        # gridLayout
-        self.gridLayout.Dock = swf.DockStyle.Fill
-        self.gridLayout.Location = sd.Point(0, 0)
-        self.gridLayout.Size = sd.Size(384, 81)
-        self.gridLayout.Padding = swf.Padding(5)
-        self.gridLayout.SetColumnSpan(self.buttonLayout, 2)
-        self.gridLayout.RowCount = 2
-        self.gridLayout.RowStyles.Add(swf.RowStyle(swf.SizeType.Absolute, 30))
-        self.gridLayout.RowStyles.Add(swf.RowStyle())
-        self.gridLayout.ColumnCount = 2
-        self.gridLayout.ColumnStyles.Add(swf.ColumnStyle(swf.SizeType.Absolute, 100))
-        self.gridLayout.ColumnStyles.Add(swf.ColumnStyle())
-        self.gridLayout.Controls.Add(self.labelTag, 0, 0)
-        self.gridLayout.Controls.Add(self.comboTag, 1, 0)
-        self.gridLayout.Controls.Add(self.buttonLayout, 1, 1)
-        # TagSelectionForm
-        self.Text = "TagRisersInView.py - Tag Selection"
-        self.AcceptButton = self.buttonSelect
-        self.CancelButton = self.buttonCancel
-        self.AutoScaleDimensions = sd.SizeF(6, 13)
-        self.AutoScaleMode = swf.AutoScaleMode.Font
-        self.ClientSize = sd.Size(384, 81)
-        self.Controls.Add(self.gridLayout)
-        self.KeyPreview = True
-        self.MinimumSize = sd.Size(400, 120)
-        self.gridLayout.ResumeLayout(False)
-        self.gridLayout.PerformLayout()
-        self.buttonLayout.ResumeLayout(False)
-        self.ResumeLayout(False)
-        self.StartPosition = swf.FormStartPosition.CenterScreen
-    
-    def populate_combo_boxes(self, tags):
-        """Populate the combo boxes with tag names."""
-        for tag_title in sorted(tags.keys()):  # fill combo box
-            self.comboTag.Items.Add(tag_title)
-        self.comboTag.SelectedIndex = 0  # preselect first element
-    
-    def get_selection(self):
-        """Return the currently selected item."""
-        return self.comboTag.SelectedItem
-
-
 if __name__ == "__main__":
-    __window__.Hide()
-    main()
-    __window__.Close()
+    #__window__.Hide()
+    __result__ == main()
+    #__window__.Close()
