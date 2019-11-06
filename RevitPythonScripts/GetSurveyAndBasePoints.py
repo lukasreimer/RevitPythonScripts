@@ -1,22 +1,21 @@
-"""Module docstring."""
+"""Query the Survey Point and the Project Base Point and get the translation
+and rotation.
+"""
 
-# standard library imports
 import clr
-# third party imports
 clr.AddReference('RevitAPI')
 clr.AddReference('RevitAPIUI')
 import Autodesk.Revit.DB as db
 import Autodesk.Revit.UI as ui
-# local imports
-# ...
 
-__name = "ScriptName.py"
-__version = "0.1"
+__name = "GetSurveyAndBasePoints.py"
+__version = "0.1a"
+
 
 def main():
     """Main script docstring."""
     
-    print("🐍 Running {name} version {ver}".format(name=__name, ver=__version))
+    print("🐍 Running {name} version {ver}:".format(name=__name, ver=__version))
 
     # Setup
     app = __revit__.Application

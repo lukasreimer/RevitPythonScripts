@@ -39,7 +39,7 @@ REMAPPING = {
 
 
 def main():
-    """Main script docstring."""
+    """Main script - Correct the pipe riser tags tagging vent pipes."""
     
     print("🐍 Running {name} version {ver}:".format(name=__name, ver=__version))
 
