@@ -10,7 +10,7 @@ annotation symbol family types.
 """
 
 from __future__ import print_function
-import sys
+import math
 import clr
 clr.AddReference('RevitAPI')
 clr.AddReference('RevitAPIUI')
@@ -37,6 +37,7 @@ TAG_TYPE_NAME_MAPPING = {  # hard coded tag names to use
 }
 
 
+# TODO: implement survey point / project base point offset correction
 def main():
     """Main Script. """
     
@@ -106,7 +107,7 @@ def main():
     for category, pipes in categorized_pipes.items():
         print("  ➜ Found {num} pipes in category '{cat}'".format(num=len(pipes), cat=category))
 
-    # STEP 8: Place tags at the pipes
+    # STEP 8: Place tags at the pipes TODO: avoid craeting duplicate tags
     print("Creating tags... ", end="")
     transaction = db.Transaction(doc)
     transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
@@ -128,6 +129,13 @@ def main():
 
 
 # Helpers:
+def get_connectors(pipe):
+    """Get the connector elements of a pipe."""
+    connector_set = pipe.ConnectorManager.Connectors
+    connectors = [connector for connector in connector_set.GetEnumerator()]
+    assert len(connectors) == 2
+    return connectors
+
 def categorize_pipes(vertical_pipes, top, bottom):
     """Categorize vertical pipes based on location in the view and flow.
 
@@ -137,13 +145,15 @@ def categorize_pipes(vertical_pipes, top, bottom):
     categorized_pipes = {key: [] for key in TAG_TYPE_NAME_MAPPING.keys()}
     uncategorized_pipes = []
     for pipe in vertical_pipes:
-        connector_set = pipe.ConnectorManager.Connectors
-        connectors = [connector for connector in connector_set.GetEnumerator()]
-        assert len(connectors) == 2
+        # connector_set = pipe.ConnectorManager.Connectors
+        # connectors = [connector for connector in connector_set.GetEnumerator()]
+        # assert len(connectors) == 2
+        connectors = get_connectors(pipe)
+        # print(connectors)
         if any([connector.Direction == db.FlowDirectionType.Bidirectional for connector in connectors]):
-            start, end = get_in_out(connectors)
+            start, end = get_high_low(pipe)
         else:
-            start, end = get_in_out(connectors)
+            start, end = get_in_out(pipe)
         if start >= end:  # → pipe going down
             if start >= top and bottom >= end:
                 categorized_pipes["Fallleitung"].append(pipe)
@@ -164,13 +174,14 @@ def categorize_pipes(vertical_pipes, top, bottom):
                 uncategorized_pipes.append(pipe)
     return categorized_pipes, uncategorized_pipes
 
-def get_in_out(connectors):
+def get_in_out(pipe):
     """Get the inflow and the outflow elevations from two arbitrary points."""
-    assert len(connectors) >= 2
-    first = connectors[0]
-    second = connectors[1]
-    direction1 = first.Direction
-    direction2 = second.Direction
+    # assert len(connectors) >= 2
+    # first = connectors[0]
+    # second = connectors[1]
+    first, second = get_connectors(pipe)
+    direction1, direction2 = first.Direction, second.Direction
+    #direction2 = second.Direction
     if direction1 == db.FlowDirectionType.In and direction2 == db.FlowDirectionType.Out:
         inflow = first.Origin.Z
         outflow = second.Origin.Z
@@ -178,16 +189,17 @@ def get_in_out(connectors):
         inflow = second.Origin.Z
         outflow = first.Origin.Z
     else:  # some connector is bidirectional or both are equal, use high/low
-        inflow, outflow = get_high_low(connectors)
+        inflow, outflow = get_high_low(pipe)
     return inflow, outflow
 
-def get_high_low(connectors):
+def get_high_low(pipe):
     """Get the higher and the lower elevations from two arbitrary points."""
-    assert len(connectors) >= 2
-    first = connectors[0]
-    second = connectors[1]
-    point1 = first.Origin
-    point2 = second.Origin
+    # assert len(connectors) >= 2
+    # first = connectors[0]
+    # second = connectors[1]
+    first, second = get_connectors(pipe)
+    point1, point2 = first.Origin, second.Origin
+    #point2 = second.Origin
     high = max(point1.Z, point2.Z)
     low = min(point1.Z, point2.Z)
     return high, low
@@ -195,39 +207,41 @@ def get_high_low(connectors):
 def get_points(pipe):
     """Get the start and end point of a pipe."""
     curve = pipe.Location.Curve
-    start = curve.GetEndPoint(0)
-    end = curve.GetEndPoint(1)
-    return start, end
+    point0 = curve.GetEndPoint(0)
+    point1 = curve.GetEndPoint(1)
+    return point0, point1
 
-def is_vertical(pipe, tolerance=1.0e-3):
-    """Check if a pipe is vertical (within the given tolerance)."""
-    start, end = get_points(pipe)
-    dz = abs(start.Z - end.Z)
-    if dz > tolerance:
-        dx = abs(start.X - end.X)
-        dy = abs(start.X - end.X)
-        if dx < tolerance and dy < tolerance:
-            return True
-    return False
+def is_vertical(pipe, tolerance=1):
+    """Check if a pipe is vertical (within the given angle tolerance)."""
+    point1, point2 = get_points(pipe)
+    dz = abs(point1.Z - point2.Z)
+    if dz:  # is not horizontal
+        dx = abs(point1.X - point2.X)
+        dy = abs(point1.Y - point2.Y)
+        dxy = math.sqrt(dx ** 2 + dy ** 2)
+        alpha = math.degrees(math.atan2(dxy, dz))
+        if alpha < tolerance:
+            return True  # is vertical
+    return False  # is not vertical
+
 
 def top_and_bottom_elevation(doc, view):
     """Extract top and bottom elevation of a plan view."""
     view_range = view.GetViewRange()
-    top_plane = view_range.GetLevelId(db.PlanViewPlane.TopClipPlane)
-    bottom_plane = view_range.GetLevelId(db.PlanViewPlane.BottomClipPlane)
-    top_level = doc.GetElement(top_plane)
-    bottom_level = doc.GetElement(bottom_plane)
+    top_level_id = view_range.GetLevelId(db.PlanViewPlane.TopClipPlane)
+    bottom_level_id = view_range.GetLevelId(db.PlanViewPlane.BottomClipPlane)
+    top_level = doc.GetElement(top_level_id)
+    bottom_level = doc.GetElement(bottom_level_id)
     top_offset = view_range.GetOffset(db.PlanViewPlane.TopClipPlane)
     bottom_offset = view_range.GetOffset(db.PlanViewPlane.BottomClipPlane)
-    top_elevation = top_level.Elevation + top_offset
-    bottom_elevation = bottom_level.Elevation + bottom_offset
+    top_elevation = top_level.ProjectElevation + top_offset
+    bottom_elevation = bottom_level.ProjectElevation + bottom_offset
     assert top_elevation >= bottom_elevation
     return top_elevation, bottom_elevation
 
 def pipe_location(pipe, elevation):
     """Returns the intersetion point of the pipe with the elevation."""
-    # ! Assuming the pipe is vertical for now !
-    # TODO: implement level/pipe intersection
+    # ! Assuming the pipe is vertical for now ! TODO: implement level/pipe intersection
     curve = pipe.Location.Curve
     pipe_point = curve.GetEndPoint(0)
     point = db.XYZ(pipe_point.X, pipe_point.Y, elevation)

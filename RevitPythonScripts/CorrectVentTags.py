@@ -13,7 +13,7 @@ import Autodesk.Revit.DB as db
 import Autodesk.Revit.UI as ui
 
 __name = "CorrectVentTags.py"
-__version = "0.1b"
+__version = "0.2b"
 
 # Constants
 TAG_FAMILY_NAME = "BHE_DE_PipeTag_FlowArrow"
@@ -80,7 +80,6 @@ def main():
                      .ToElements()
 
     # STEP 4: Change all tags on vent pipes to vent tags
-    # TODO: test running the script on a finished drawing!
     print("Changing all pipe riser tags tagging vent pipes.... ", end="")
     transaction = db.Transaction(doc)
     transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
