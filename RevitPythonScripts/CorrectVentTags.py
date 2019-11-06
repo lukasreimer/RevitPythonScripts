@@ -108,8 +108,7 @@ def main():
         return ui.Result.Failed
     else:
         transaction.Commit()
-        print("✔")
-        print("Done. 😊")
+        print("✔\nDone. 😊")
         return ui.Result.Succeeded
 
 
