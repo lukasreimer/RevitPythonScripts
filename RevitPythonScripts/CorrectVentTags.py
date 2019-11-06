@@ -114,4 +114,5 @@ def main():
 if __name__ == "__main__":
     #__window__.Hide()
     __result__ = main()
-    #__window__.Close()
+    if __result__ == ui.Result.Succeeded:
+        __window__.Close()

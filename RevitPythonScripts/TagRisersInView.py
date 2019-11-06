@@ -37,7 +37,6 @@ TAG_TYPE_NAME_MAPPING = {  # hard coded tag names to use
 }
 
 
-# TODO: implement survey point / project base point offset correction
 def main():
     """Main Script. """
     
@@ -107,7 +106,7 @@ def main():
     for category, pipes in categorized_pipes.items():
         print("  ➜ Found {num} pipes in category '{cat}'".format(num=len(pipes), cat=category))
 
-    # STEP 8: Place tags at the pipes TODO: avoid craeting duplicate tags
+    # STEP 8: Place tags at the pipes TODO: avoid creating duplicate tags
     print("Creating tags... ", end="")
     transaction = db.Transaction(doc)
     transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
@@ -250,5 +249,6 @@ def pipe_location(pipe, elevation):
 
 if __name__ == "__main__":
     #__window__.Hide()
-    __result__ == main()
-    #__window__.Close()
+    result = main()
+    if result == ui.Result.Succeeded:
+        __window__.Close()

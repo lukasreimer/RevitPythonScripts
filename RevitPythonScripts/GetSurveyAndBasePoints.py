@@ -19,7 +19,7 @@ RADIANS_TO_DEGREE = 180 / math.pi  # rad/°
 
 
 def main():
-    """Main script docstring."""
+    """Main script."""
     
     print("🐍 Running {name} version {ver}:".format(name=__name, ver=__version))
 
@@ -71,7 +71,7 @@ def main():
     print("Transform =", transform)
     print("Total Transform =", total_transform)
 
-    print("✔\nDone. ✘🛈➜😊")
+    print("✔\nDone. 😊")
 
 
 if __name__ == "__main__":

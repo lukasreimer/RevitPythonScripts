@@ -8,7 +8,7 @@ import Autodesk.Revit.DB as db
 import Autodesk.Revit.UI as ui
 
 __name = "ClearPipeRiserTagsInView.py"
-__version = "0.1b"
+__version = "0.2b"
 
 # Constants
 TAG_FAMILY_NAME = "BHE_DE_PipeTag_FlowArrow"
@@ -66,6 +66,7 @@ def main():
 
 
 if __name__ == "__main__":
-    # __window__.Hide()
-    main()
-    # __window__.Close()
+    #__window__.Hide()
+    result = main()
+    if result == ui.Result.Succeeded:
+        __window__.Close()

@@ -29,6 +29,7 @@ def main():
 
 
 if __name__ == "__main__":
-    # __window__.Hide()
-    main()
-    # __window__.Close()
+    #__window__.Hide()
+    result = main()
+    if result == ui.Reuslt.Succeeded:
+        __window__.Close()
