@@ -18,9 +18,6 @@ __version = "0.1a"
 # Constsants:
 FEET_2_METER = 0.3048
 
-# Variables:
-FILTER = "SWL"  # TODO: detect all available system names and run analysis for all at once
-
 
 def main():
     """Main Script. """
@@ -38,65 +35,60 @@ def main():
               .WhereElementIsNotElementType()\
               .ToElements()
     print("✔")
-    print("  ➜ Found {num} pipes in the model.".format(num=len(pipes)))
+    print("  ➜ Found {num} pipes = {len} m in the model.".format(
+        num=len(pipes), len=total_length(pipes)))
 
     # STEP 2: Filter pipes
     print("Filtering pipes by system type...", end="")
-    interesting_pipes = []
-    for pipe in pipes:
-        system = pipe.MEPSystem
-        system_type = doc.GetElement(system.GetTypeId())
-        system_name = system_type.get_Parameter(db.BuiltInParameter.RBS_SYSTEM_ABBREVIATION_PARAM).AsString()
-        if system_name == FILTER:
-            interesting_pipes.append(pipe)
+    sorted_pipes = sort_pipes(pipes, doc)
     print("✔")
-    print("  ➜ Found {num} interesting pipes in the model. Filtered for '{fil}'.".format(num=len(interesting_pipes), fil=FILTER))
+    for key in sorted_pipes.keys():
+        print("  ➜ Found {num} pipes = {len} m of type '{key}' in the model.".format(
+            num=len(sorted_pipes[key]), len=total_length(sorted_pipes[key]), key=key))
 
     # STEP 3: Categorize pipes
     print("Categorizing pipes...", end="")
-    categorized_pipes = categorize_pipes(interesting_pipes)
+    categorized_pipes = categorize_pipes(sorted_pipes)
     print("✔")
-    print("  ➜ Found {num} horizontal pipes in the model.".format(num=len(categorized_pipes["horizontal"])))
-    print("  ➜ Found {num} vertical pipes in the model.".format(num=len(categorized_pipes["vertical"])))
-
-    # Step 4: Calculate total lengths and print results
-    print("Results:")
-    print("  ➜ Found {len} m of horizontal pipes in the model.".format(len=total_length(categorized_pipes["horizontal"])))
-    print("  ➜ Found {len} m of vertical pipes in the model.".format(len=total_length(categorized_pipes["vertical"])))
+    for key in categorized_pipes.keys():
+        print("  ➜ Found {numh} horizontal pipes = {lenh} m an {numv} vertical pipes = {lenv} m of type '{key}' in the model.".format(
+            numh=len(categorized_pipes[key]["horizontal"]), lenh=total_length(categorized_pipes[key]["horizontal"]),
+            numv=len(categorized_pipes[key]["vertical"]), lenv=total_length(categorized_pipes[key]["vertical"]),
+            key=key))
 
 
 # Helpers:
-def get_connectors(pipe):
-    """Get the connector elements of a pipe."""
-    connector_set = pipe.ConnectorManager.Connectors
-    connectors = [connector for connector in connector_set.GetEnumerator()]
-    assert len(connectors) == 2
-    return connectors
-
-def categorize_pipes(pipes):
-    """Categorize vertical pipes based on location in the view and flow.
-
-    Default to assuming downward flow (gravity) when no flow information is
-    available for the investigated pipe element.
-    """
-    categorized_pipes = {"vertical": [], "horizontal": []}
+def sort_pipes(pipes, doc):
+    """Sort pipes by theri systems name."""
+    sorted_pipes = {}
     for pipe in pipes:
-        if is_vertical(pipe):
-            categorized_pipes["vertical"].append(pipe)
-        else:
-            categorized_pipes["horizontal"].append(pipe)
-    return categorized_pipes
+        system = pipe.MEPSystem
+        system_type = doc.GetElement(system.GetTypeId())
+        system_abbreviation = system_type.Abbreviation
+        try:  # to add a pipe to a list
+            sorted_pipes[system_abbreviation].append(pipe)
+        except KeyError:  # create the list if it soes not exist yet
+            sorted_pipes[system_abbreviation] = [pipe, ]
+    return sorted_pipes
 
-def get_points(pipe):
-    """Get the start and end point of a pipe."""
-    curve = pipe.Location.Curve
-    point0 = curve.GetEndPoint(0)
-    point1 = curve.GetEndPoint(1)
-    return point0, point1
+def categorize_pipes(sorted_pipes):
+    """Categorize vertical/horizontal pipes."""
+    categorized_pipes = {}
+    for key, pipes in sorted_pipes.items():
+        categories = {"vertical": [], "horizontal": []}
+        for pipe in pipes:
+            if is_vertical(pipe):
+                categories["vertical"].append(pipe)
+            else:
+                categories["horizontal"].append(pipe)
+        categorized_pipes[key] = categories
+    return categorized_pipes
 
 def is_vertical(pipe, tolerance=1):
     """Check if a pipe is vertical (within the given angle tolerance)."""
-    point1, point2 = get_points(pipe)
+    curve = pipe.Location.Curve
+    point1 = curve.GetEndPoint(0)
+    point2 = curve.GetEndPoint(1)
     dz = abs(point1.Z - point2.Z)
     if dz:  # is not horizontal
         dx = abs(point1.X - point2.X)
