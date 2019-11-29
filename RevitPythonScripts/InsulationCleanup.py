@@ -1,9 +1,9 @@
 """Cleanup unhosted and rogue pipe and duct insulation."""
 
+from __future__ import print_function
 import collections
 import datetime
 import itertools
-import string
 import clr
 clr.AddReference("RevitAPI")
 clr.AddReference("RevitAPIUI")
@@ -22,21 +22,26 @@ ERROR = "✘"
 def main():
     """Main Script."""
 
-    print("Running {name} version {ver}...".format(name=__name, ver=__version))
+    print("🐍 Running {fname} version {ver}...".format(fname=__name, ver=__version))
+
 
     # STEP 0: Setup
     doc = __revit__.ActiveUIDocument.Document
 
     # STEP 1: Inspect Model and summarize findings
-    pipe_insulations = query_all_elements_of_category(doc=doc, cat=db.BuiltInCategory.OST_PipeInsulations)
-    duct_insulations = query_all_elements_of_category(doc=doc, cat=db.BuiltInCategory.OST_DuctInsulations)
-    rogue_pipe, unhosted_pipe = find_rogue_and_unhosted_elements(doc=doc, elems=pipe_insulations)
-    rogue_duct, unhosted_duct = find_rogue_and_unhosted_elements(doc=doc, elems=duct_insulations)
+    pipe_insulations = query_all_elements_of_category(
+        doc=doc, cat=db.BuiltInCategory.OST_PipeInsulations)
+    duct_insulations = query_all_elements_of_category(
+        doc=doc, cat=db.BuiltInCategory.OST_DuctInsulations)
+    rogue_pipe, unhosted_pipe = find_rogue_and_unhosted_elements(
+        doc=doc, elems=pipe_insulations)
+    rogue_duct, unhosted_duct = find_rogue_and_unhosted_elements(
+        doc=doc, elems=duct_insulations)
     summary_list = write_summary(
         tpipe=pipe_insulations, tduct=duct_insulations,  # totals
-        upipe= unhosted_pipe, uduct=unhosted_duct,       # unhosted
-        rpipe=rogue_pipe, rduct=rogue_duct)              # rogue
-    summary_text = string.join(summary_list, "\n")
+        upipe= unhosted_pipe, uduct=unhosted_duct,  # unhosted
+        rpipe=rogue_pipe, rduct=rogue_duct)  # rogue
+    summary_text = "\n".join(summary_list)
     print(summary_text)
 
     # STEP 2: Receive User Input
@@ -63,9 +68,11 @@ def main():
                     doc, unhosted_pipe, rogue_pipe, unhosted_duct, rogue_duct)
                 for line in report:
                     fh.write("{line}\r\n".format(line=line))
-                print("Done.")
+            print("✔\nDone. 😊")
+            return ui.Result.Succeeded
         else:  # Don't save report
-            print("File save dialog canceled.")
+            print("🛈 File save dialog canceled.")
+            return ui.Result.Cancelled
     elif result == ui.TaskDialogResult.CommandLink2:  # Clean Insulation
         transaction = db.Transaction(doc)
         transaction.Start("{name} - v{ver}".format(name=__name, ver=__version))
@@ -73,24 +80,31 @@ def main():
             print("Cleaning Insulation...")
             for pipe_element in unhosted_pipe:
                 doc.Delete(pipe_element.Id)
-            print("Deleted {num} unhosted pipe insulation elements".format(num=len(unhosted_pipe)))
+            print("Deleted {num} unhosted pipe insulation elements".format(
+                num=len(unhosted_pipe)))
             for pipe_pair in rogue_pipe:
                 cleanup_insulation(pipe_pair)
-            print("Moved {num} rogue pipe insulation elements.".format(num=len(rogue_pipe)))
+            print("Moved {num} rogue pipe insulation elements.".format(
+                num=len(rogue_pipe)))
             for duct_element in unhosted_duct:
                 doc.Delete(duct_element.Id)
-            print("Deleted {num} unhosted duct insulation elements.".format(num=len(unhosted_duct)))
+            print("Deleted {num} unhosted duct insulation elements.".format(
+                num=len(unhosted_duct)))
             for duct_pair in rogue_duct:
                 cleanup_insulation(duct_pair)
-            print("Moved {num} rogue duct insulation elements.".format(num=len(rogue_duct)))
+            print("Moved {num} rogue duct insulation elements.".format(
+                num=len(rogue_duct)))
         except Exception as exception:
             print("Failed.\nException:\n{ex}".format(ex=exception))
             transaction.RollBack()
+            return ui.Result.Failed
         else:
-            print("Done.")
+            print("✔\nDone. 😊")
             transaction.Commit()
+            return ui.Result.Succeeded
     else:
         print("Nothing to do.")
+        return ui.Result.Cancelled
 
 
 ElementHostPair = collections.namedtuple("ElementHostPair", ["element", "host"])
@@ -134,13 +148,19 @@ def write_summary(tpipe, tduct, upipe, rpipe, uduct, rduct):
     """Write a summary of rogue and unhosted insulation elements."""
     summary = []
     summary.append("Pipe Insulation:")
-    summary.append("{res} Found {num} rogue pipe insulation elements.".format(num=len(rpipe), res=ERROR if len(rpipe) else CHECK))
-    summary.append("{res} Found {num} unhosted pipe insulation elements.".format(num=len(upipe), res=ERROR if len(upipe) else CHECK))
-    summary.append("There is a total of {tot} pipe insulation elements in the model.".format(tot=len(tpipe)))
+    summary.append("{res} Found {num} rogue pipe insulation elements.".format(
+        num=len(rpipe), res=ERROR if len(rpipe) else CHECK))
+    summary.append("{res} Found {num} unhosted pipe insulation elements.".format(
+        num=len(upipe), res=ERROR if len(upipe) else CHECK))
+    summary.append("There is a total of {tot} pipe insulation elements in the model.".format(
+        tot=len(tpipe)))
     summary.append("Duct Insulation:")
-    summary.append("{res} Found {num} rogue duct insulation elements.".format(num=len(rduct), res=ERROR if len(rduct) else CHECK))
-    summary.append("{res} Found {num} unhosted duct insulation elements.".format(num=len(uduct), res=ERROR if len(uduct) else CHECK))
-    summary.append("There is a total of {tot} duct insulation elements in the model.".format(tot=len(tduct)))
+    summary.append("{res} Found {num} rogue duct insulation elements.".format(
+        num=len(rduct), res=ERROR if len(rduct) else CHECK))
+    summary.append("{res} Found {num} unhosted duct insulation elements.".format(
+        num=len(uduct), res=ERROR if len(uduct) else CHECK))
+    summary.append("There is a total of {tot} duct insulation elements in the model.".format(
+        tot=len(tduct)))
     return summary
 
 
@@ -171,9 +191,7 @@ def write_report(doc, upipe, rpipe, uduct, rduct):
         report.append(line)
     # write unhosted element data:
     for idx, elem in enumerate(itertools.chain(upipe, uduct), start=1):
-        elem, host = pair
         elem_workset = workset_table.GetWorkset(elem.WorksetId)
-        #host_workset = workset_table.GetWorkset(host.WorksetId)
         line = line_template.format(
             idx=idx,
             eid=elem.Id.IntegerValue, en=elem.Name, ews=elem_workset.Name,
@@ -183,6 +201,7 @@ def write_report(doc, upipe, rpipe, uduct, rduct):
 
 
 if __name__ == "__main__":
-    main()
     #__window__.Hide()
-    #__window__.Close()
+    result = main()
+    if result == ui.Result.Succeeded:
+        __window__.Close()
