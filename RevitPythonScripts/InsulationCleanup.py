@@ -159,8 +159,8 @@ def write_report(doc, upipe, rpipe, uduct, rduct):
     line_template = "{idx},{eid},'{en}','{ews}',{hid},'{hn}','{hws}'"
     report.append(
         "index,element id,element name,element workset,host id,host name,host workset")
-    # write rogue and unhosted element data:
-    for idx, pair in enumerate(itertools.chain(upipe, rpipe, uduct, rduct), start=1):
+    # write rogue element data:
+    for idx, pair in enumerate(itertools.chain(rpipe, rduct), start=1):
         elem, host = pair
         elem_workset = workset_table.GetWorkset(elem.WorksetId)
         host_workset = workset_table.GetWorkset(host.WorksetId)
@@ -169,10 +169,20 @@ def write_report(doc, upipe, rpipe, uduct, rduct):
             eid=elem.Id.IntegerValue, en=elem.Name, ews=elem_workset.Name,
             hid=host.Id.IntegerValue, hn=host.Name, hws=host_workset.Name)
         report.append(line)
+    # write unhosted element data:
+    for idx, elem in enumerate(itertools.chain(upipe, uduct), start=1):
+        elem, host = pair
+        elem_workset = workset_table.GetWorkset(elem.WorksetId)
+        #host_workset = workset_table.GetWorkset(host.WorksetId)
+        line = line_template.format(
+            idx=idx,
+            eid=elem.Id.IntegerValue, en=elem.Name, ews=elem_workset.Name,
+            hid="-", hn="-", hws="-")
+        report.append(line)
     return report
 
 
 if __name__ == "__main__":
     main()
-    __window__.Hide()
-    __window__.Close()
+    #__window__.Hide()
+    #__window__.Close()
