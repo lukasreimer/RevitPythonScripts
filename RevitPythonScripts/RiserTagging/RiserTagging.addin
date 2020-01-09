@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>RiserTagging</Name>
+    <Assembly>%APPDATA%\Autodesk\Revit\Addins\2018\RiserTagging\RiserTagging.dll</Assembly>
+    <AddInId>20726a0d-25d5-428f-86f8-3a4e30e2013d</AddInId>
+    <FullClassName>RiserTagging</FullClassName>
+    <VendorId>BHLR</VendorId>
+  </AddIn>
+</RevitAddIns>
