@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>InsulationCLeanup</Name>
+    <Assembly>%APPDATA%\Autodesk\Revit\Addins\2018\InsulationCleanup\InsulationCleanup.dll</Assembly>
+    <AddInId>1dab6f1a-d7f7-499f-8270-6accc3bb786e</AddInId>
+    <FullClassName>InsulationCleanup</FullClassName>
+    <VendorId>BHLR</VendorId>
+  </AddIn>
+</RevitAddIns>

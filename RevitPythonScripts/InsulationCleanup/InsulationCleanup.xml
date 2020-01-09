@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<RpsAddin>
+    <RibbonPanel text="InsulationCleanup">
+        <PushButton text="Clean Insulation" src="InsulationCleanup.py" />
+    </RibbonPanel>
+</RpsAddin>
