@@ -225,18 +225,43 @@ def is_vertical(pipe, tolerance=1):
 
 
 def top_and_bottom_elevation(doc, view):
-    """Extract top and bottom elevation of a plan view."""
+    """Extract top and bottom elevation of a plan view.
+    
+    If undefined "Level Above" or "Level Below" are specified in the View Range,
+    the generating level of the view and the according offset (top / bottom)
+    are used for specifying the top and bottom elevations.
+    """
+    view_level = view.GenLevel
+    #print("view level =", view_level)
     view_range = view.GetViewRange()
+    #print("view_range =", view_range)
     top_level_id = view_range.GetLevelId(db.PlanViewPlane.TopClipPlane)
+    #print("top_level_id =", top_level_id)
+    if top_level_id == view_range.LevelAbove:
+        #print("'Level Above' Specified for top plane!!! --> using View Level.")
+        top_level = view_level
+    else:
+        top_level = doc.GetElement(top_level_id)
+    #print("top_level =", top_level)
     bottom_level_id = view_range.GetLevelId(db.PlanViewPlane.BottomClipPlane)
-    top_level = doc.GetElement(top_level_id)
-    bottom_level = doc.GetElement(bottom_level_id)
+    #print("bottom_level_id =", bottom_level_id)
+    if bottom_level_id == view_range.LevelBelow:
+        #print("Level Below Specified for bottom plane!!! --> using View Level.")
+        bottom_level = view_level
+    else:
+        bottom_level = doc.GetElement(bottom_level_id)
+    #print("bottom_level =", bottom_level)
     top_offset = view_range.GetOffset(db.PlanViewPlane.TopClipPlane)
+    #print("top_offset =", top_offset)
     bottom_offset = view_range.GetOffset(db.PlanViewPlane.BottomClipPlane)
+    #print("bottom_offset =", bottom_offset)
     top_elevation = top_level.ProjectElevation + top_offset
+    #print("top_elevation =", top_elevation)
     bottom_elevation = bottom_level.ProjectElevation + bottom_offset
+    #print("bottom_elevation =", bottom_elevation)
     assert top_elevation >= bottom_elevation
     return top_elevation, bottom_elevation
+
 
 def pipe_location(pipe, elevation):
     """Returns the intersetion point of the pipe with the elevation."""
@@ -250,5 +275,5 @@ def pipe_location(pipe, elevation):
 if __name__ == "__main__":
     #__window__.Hide()
     result = main()
-    if result == ui.Result.Succeeded:
-        __window__.Close()
+    # if result == ui.Result.Succeeded:
+    #     __window__.Close()
