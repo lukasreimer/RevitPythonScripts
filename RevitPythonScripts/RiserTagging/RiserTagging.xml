@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <RpsAddin>
-    <RibbonPanel text="RiserTagging">
-        <PushButton text="Tag" src="TagRisersInView.py" largeImage="icons8-tag-window-32.png" />
-        <PushButton text="Vent" src="CorrectVentTags.py" largeImage="icons8-update-tag-32.png" />
-        <PushButton text="Color" src="ColorRiserTags.py" largeImage="icons8-color-dropper-32.png" />
-        <PushButton text="Clear" src="ClearPipeRiserTagsInView.py" largeImage="icons8-delete-bin-32.png" />
+    <RibbonPanel text="Riser Tagging">
+        <SplitButton text="Riser Tagging">
+            <PushButton text="Tag Risers" src="TagRisersInView.py" largeImage="icons8-tag-window-32.png" />
+            <PushButton text="Correct Ventilation" src="CorrectVentTags.py" largeImage="icons8-update-tag-32.png" />
+            <PushButton text="Color Riser Tags" src="ColorRiserTags.py" largeImage="icons8-color-dropper-32.png" />
+            <PushButton text="Clear Riser Tags" src="ClearPipeRiserTagsInView.py" largeImage="icons8-delete-bin-32.png" />
+        </SplitButton>
     </RibbonPanel>
 </RpsAddin>
