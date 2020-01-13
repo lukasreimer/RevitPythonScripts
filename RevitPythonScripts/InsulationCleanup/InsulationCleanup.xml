@@ -2,7 +2,8 @@
 <RpsAddin>
   <RibbonPanel text="Insulation Cleanup">
     <SplitButton text="Insulation Cleanup">
-      <PushButton text="Clean Insulation" src="InsulationCleanup.py" largeImage="icons8-carpet-cleaning-32.png" />
+      <PushButton text="Clean Insulation" src="InsulationCleanup.py" largeImage="icons8\carpet-cleaning-32.png" />
+      <PushButton text="About" src="about.py" largeImage="icons8\about-32.png" />
     </SplitButton>
   </RibbonPanel>
 </RpsAddin>
