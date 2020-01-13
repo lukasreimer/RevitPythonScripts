@@ -1,4 +1,4 @@
-"""About Cleanup unhosted and rogue pipe and duct insulation."""
+"""About Page for Insulation Cleanup Script."""
 
 import clr
 clr.AddReference("RevitAPIUI")
