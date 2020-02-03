@@ -1,6 +1,7 @@
 """Module docstring."""
 
 # standard library imports
+from __future__ import print_function
 import clr
 # third party imports
 clr.AddReference('RevitAPI')
@@ -26,10 +27,11 @@ def main():
 
     # Main script
     print("Hello World! ✔✘🛈➜😊")
+    return ui.Result.Succeeded
 
 
 if __name__ == "__main__":
     #__window__.Hide()
     result = main()
-    if result == ui.Reuslt.Succeeded:
+    if result == ui.Result.Succeeded:
         __window__.Close()
