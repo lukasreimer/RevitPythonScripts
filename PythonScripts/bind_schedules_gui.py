@@ -8,18 +8,20 @@ import tkinter as tk
 import tkinter.filedialog as tkfiledialog
 import xlwings
 
-# Constants:
-BUTTON_WIDTH = 30
-BUTTON_HEIGHT = 2
-
 
 class Application(tk.Frame):
     """Main Application Window."""
+
+    DEFAULT_BUTTON_WIDTH = 30
+    DEFAULT_BUTTON_HEIGHT = 2
 
     def __init__(self, master=None):
         """Class Initializer."""
         super().__init__(master)
         self.master = master
+        self.master.title("CSV-Binder")
+        self.master.minsize(250, 100)
+        self.master.resizable(0, 0)
         self.pack()
         self.create_widgets()
 
@@ -27,73 +29,44 @@ class Application(tk.Frame):
         """Widget Creation Function."""
         self.btn_folder = tk.Button(
             self, text="Bind Folder", command=self.bind_folder,
-            width=BUTTON_WIDTH, height=BUTTON_HEIGHT,)
+            width=self.DEFAULT_BUTTON_WIDTH, height=self.DEFAULT_BUTTON_HEIGHT)
         self.btn_folder.pack(side=tk.TOP)
         self.btn_files = tk.Button(
             self, text="Bind Files", command=self.bind_files,
-            width=BUTTON_WIDTH, height=BUTTON_HEIGHT,)
+            width=self.DEFAULT_BUTTON_WIDTH, height=self.DEFAULT_BUTTON_HEIGHT)
         self.btn_files.pack(side=tk.TOP)
 
     def bind_folder(self):
         """Button Command for Binding CSVs from a source folder."""
-        # print("Binding folder...")
-        # print("Select source folder containing CSVs! ", end="")
         source_directory = tkfiledialog.askdirectory(
             title="Select a Folder with CSV Files")
-        # print("✔")
-        # print("  ➜ Selected directory: {dir}".format(dir=source_directory))
-        # print("Checking for CSV files in the folder...", end="")
         try:
             csv_file_paths = get_all_csv_files_in_folder(source_directory)
         except IOError as exc:
             print(exc)
             return
-        # print("✔")
-        # print("  ➜ Found {num} CSV files".format(num=len(csv_file_paths)))
-        # for path in sorted(csv_file_paths):
-        #     print("  ➜ {path}".format(path=path))
         if len(csv_file_paths) < 1:
             print("No files selected, nothing to do.")
             return
-
-        # print("Choose Destination Filename! ", end="")
         output_filename = tkfiledialog.asksaveasfilename(
             title="Choose Destination Filename",
             defaultextension=".xlsx",
             filetypes=[("Excel-File", ("*.xlsx")),])
-        # print("✔")
-        # print("  ➜ Selected filename: {path}".format(path=output_filename))
-
-        # print("Binding CSV files into Excel workbook...")
         bind_all_files(csv_file_paths, output_filename)
-        # print("Done. 😊")
 
     def bind_files(self):
         """Button Command for Binding a Selection of CSVs."""
-        # print("Bindig files...")
-        # print("Select source files! ", end="")
         csv_file_paths = tkfiledialog.askopenfilenames(
             title="Select CSV Files",
             filetypes=[("CSV-Files", ("*.csv")),])
-        # print("✔")
-        # print("  ➜ Selected {num} CSV files".format(num=len(csv_file_paths)))
-        # for path in sorted(csv_file_paths):
-        #     print("  ➜ {path}".format(path=path))
         if len(csv_file_paths) < 1:
             print("No files selected, nothing to do.")
             return
-
-        # print("Choose Destination Filename! ", end="")
         output_filename = tkfiledialog.asksaveasfilename(
             title="Choose Destination Filename",
             defaultextension=".xlsx",
             filetypes=[("Excel-File", ("*.xlsx")),])        
-        # print("✔")
-        # print("  ➜ Selected filename: {path}".format(path=output_filename))
-
-        # print("Binding CSV files into Excel workbook...")
         bind_all_files(csv_file_paths, output_filename)
-        # print("Done. 😊")
 
 
 def get_all_csv_files_in_folder(source_directory):
@@ -138,17 +111,18 @@ def bind_all_files(csv_file_paths, output_filename):
     default_sheet = workbook.sheets["Sheet1"]
     default_sheet.delete()
     # Save workbook
-    #binder_output_path = os.path.join(source_directory, output_filename)
     print(f"Saving binder to '{output_filename}'... ", end="", flush=True)
     workbook.save(output_filename)
     workbook.close()
     print("✔")
 
 
-if __name__ == "__main__":
+def main():
+    """Main Program."""
     root = tk.Tk()
-    root.title("CSV-Binder")
-    root.minsize(250, 100)
-    root.resizable(0, 0)
     app = Application(master=root)
     app.mainloop()
+
+
+if __name__ == "__main__":
+    main()
