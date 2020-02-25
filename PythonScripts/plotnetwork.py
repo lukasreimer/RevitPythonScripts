@@ -1,45 +1,44 @@
+"""Read and display a graph from a json file."""
+
 import json
 import networkx as nx
 import pyvis
 
-
-def read_file(path):
-    """Read graph from file."""
-    graph = nx.Graph()
-
-    try:
-        with open(path, mode="r") as file:
-            for line in file:
-                element, data = line.split(":")
-                if element == "node":
-                    graph.add_node(data.strip())
-                elif element == "edge":
-                    left, right = data.strip().split(",")
-                    graph.add_edge(left.strip(), right.strip())
-    except Exception as exception:
-        pritn(exception)
-    return graph
+from PySide2.QtWidgets import QApplication, QFileDialog
 
 
 def main():
     """Main function."""
-    
-    # graph = read_file(r"C:\Users\lreimer\Desktop\network.txt")
-    # print(graph)
 
-    graph = None
-    with open(r"C:\Users\lreimer\Desktop\example.json") as file:
+    app = QApplication()
+    input_filename, _ = QFileDialog.getOpenFileName(
+        None, "Open a Network for Display", "", "JSON file (*.json)")
+    print(input_filename)
+
+    if not input_filename:
+        print("No input file name specified")
+        return
+    
+    with open(input_filename, mode="r") as file:
         content = file.read()
         data = json.loads(content)
         graph = nx.readwrite.json_graph.node_link_graph(data)
-    print(graph)
+    #print(graph)
 
-    network = pyvis.network.Network()
+    network = pyvis.network.Network(
+        height="100%", width="75%", bgcolor="#222222", font_color="white")
     network.from_nx(graph)
-    print(network)
+    #print(network)
+    
+    output_filename, _ = QFileDialog.getSaveFileName(
+        None, "Choose Output File Path", "network.html", "HTML file (*.html)")
 
-    network.show_buttons(filter_=['physics'])
-    network.show(r"C:\Users\lreimer\Desktop\examplenetwork.html")
+    if not output_filename:
+        print("No output file name specified")
+        return
+
+    network.show_buttons(filter_=["physics", "interaction"])
+    network.show(output_filename)
 
 
 if __name__ == "__main__":

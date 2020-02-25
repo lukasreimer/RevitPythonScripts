@@ -1,14 +1,19 @@
-"""
-Generate a grph structure from revit element and connection information.
-"""
-# TODO: use logging instead of print style debugging
+"""Generate a grph structure from revit element and connection information."""
 
 from __future__ import print_function
 import collections
 import datetime
 import json
+import clr
+clr.AddReference("RevitAPI")
+clr.AddReference("RevitAPIUI")
+import Autodesk.Revit.DB as db
+import Autodesk.Revit.UI as ui
+clr.AddReference("System.Windows.Forms")
+import System.Windows.Forms as swf
 
-doc = __revit__.ActiveUIDocument.Document
+__name = "DiscoverNetwork.py"
+__version = "0.1a"
 
 
 class Network:
@@ -114,8 +119,13 @@ class Network:
 
 def main():
     """Main function."""
+
+    print("🐍 Running {name} version {ver}".format(name=__name, ver=__version))
+
+    doc = __revit__.ActiveUIDocument.Document
+
     if not selection:
-        print("nothing selected")
+        print("✘ nothing selected.")
         return
 
     element = selection[0]
@@ -125,16 +135,23 @@ def main():
     print(len(network.nodes))
     print(len(network.edges))
 
-    #print(network.nodes)
-    #print(network.edges)
-
-    #print(len(network.edges))
-    # network.remove_systems()
-    # print(len(network.edges))
-
-    #network.write(r"C:\Users\lreimer\Desktop\network.txt")
-    network.write_json(r"C:\Users\lreimer\Desktop\network.json")
+    save_dialog = swf.SaveFileDialog()
+    save_dialog.Title = "Save Discovered Network"
+    save_dialog.Filter = "JSON files|*.json"
+    save_dialog.FileName = "network.json"
+    if save_dialog.ShowDialog() == swf.DialogResult.OK:
+        file_path = save_dialog.FileName
+        print("Writing report to {}".format(file_path))
+        network.write_json(file_path)
+        print("✔\nDone. 😊")
+        return ui.Result.Succeeded
+    else:
+        print("🛈 File save dialog canceled.")
+        return ui.Result.Cancelled
 
 
 if __name__ == "__main__":
-    main()
+    #__window__.Hide()
+    result = main()
+    if result == ui.Result.Succeeded:
+        __window__.Close()
