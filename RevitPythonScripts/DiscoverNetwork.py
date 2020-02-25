@@ -73,10 +73,6 @@ class Network:
                         "target": edge_key[1]}
                 self._discover(owner)
         return
-    
-    def split_systems(self):
-        # TODO: split systems??
-        raise NotImplementedError
 
     def remove_systems(self):
         system_edges = []
