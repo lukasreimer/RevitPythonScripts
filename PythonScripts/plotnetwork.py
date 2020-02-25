@@ -1,3 +1,4 @@
+import json
 import networkx as nx
 import pyvis
 
@@ -19,10 +20,18 @@ def read_file(path):
         pritn(exception)
     return graph
 
+
 def main():
     """Main function."""
     
-    graph = read_file(r"C:\Users\lreimer\Desktop\network.txt")
+    # graph = read_file(r"C:\Users\lreimer\Desktop\network.txt")
+    # print(graph)
+
+    graph = None
+    with open(r"C:\Users\lreimer\Desktop\example.json") as file:
+        content = file.read()
+        data = json.loads(content)
+        graph = nx.readwrite.json_graph.node_link_graph(data)
     print(graph)
 
     network = pyvis.network.Network()
@@ -30,8 +39,7 @@ def main():
     print(network)
 
     network.show_buttons(filter_=['physics'])
-    network.show("mynetwork.html")
-    
+    network.show(r"C:\Users\lreimer\Desktop\examplenetwork.html")
 
 
 if __name__ == "__main__":
