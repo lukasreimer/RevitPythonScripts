@@ -7,7 +7,6 @@ status: still checking possibilities with available tools (Navisworks, ..?.. )
 - Model Comparison (find deleted, new, changed elements)
   - see Data Shapes: https://data-shapes.io/2016/12/31/modification-tracking-with-dynamo-and-data-shapes/ and https://github.com/MostafaElAyoubi/Data-shapes
   - see Metamorphosis: https://github.com/mattmas/Metamorphosis
-  
 
 ## Rooms and Spaces
 - Create Spaces from architecture Rooms ✓
@@ -35,7 +34,7 @@ status: still checking possibilities with available tools (Navisworks, ..?.. )
 
 ## Tagging
 - Automatic Tagging / Tag Placement
-  - Riser Tagging 🗲
+  - Riser Tagging ✓
 - Tag Alignment
 
 ## Clash Detection / Reporting
