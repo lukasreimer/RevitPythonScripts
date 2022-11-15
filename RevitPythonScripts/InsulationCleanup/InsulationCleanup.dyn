@@ -1,0 +1,1444 @@
+{
+  "Uuid": "43acc8ef-84ef-4a97-b82b-86eb1ffedc49",
+  "IsCustomNode": false,
+  "Description": null,
+  "Name": "InsulationCleanup",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [
+    {
+      "Id": "a0cf33f65c8d407caf41a5a0aae70b7b",
+      "Name": "Run Cleanup",
+      "Type": "boolean",
+      "Value": "true",
+      "Description": "Selection between a true and false."
+    }
+  ],
+  "Outputs": [
+    {
+      "Id": "e883b9913e954936823b116faa27689a",
+      "Name": "Number of rogue Pipe Insulations",
+      "Type": "integer",
+      "InitialValue": "0",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "Id": "47138853d4bb4fc281c7ab5567053289",
+      "Name": "Number of unhosted Pipe Insulations",
+      "Type": "integer",
+      "InitialValue": "0",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "Id": "16bfe7a93e464f48abccf12d4a1d5a5f",
+      "Name": "Number of rogue Duct Insulations",
+      "Type": "integer",
+      "InitialValue": "0",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "Id": "75ee422384c74fcd9d2de736f735d298",
+      "Name": "Number of unhosted Duct Insulations",
+      "Type": "integer",
+      "InitialValue": "0",
+      "Description": "Visualize the output of node."
+    }
+  ],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import clr\r\n# Import RevitNodes\r\nclr.AddReference(\"RevitNodes\")\r\nimport Revit\r\n\r\n# Import RevitAPI\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference('RevitAPIUI')\r\nimport Autodesk\r\nimport Autodesk.Revit.DB as db\r\n\r\n# Import Revit elements\r\nfrom Revit.Elements import *\r\n\r\n# Import DocumentManager\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\n# important vars, dynamo version\r\n#-------------------------------\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuiapp = DocumentManager.Instance.CurrentUIApplication\r\nuidoc = uiapp.ActiveUIDocument\r\napp = uiapp.Application\r\nview = uidoc.ActiveView \r\n\r\n\r\ndef query_all_elements_of_category(doc, cat):\r\n    \"\"\"Return all elements of a category from a document.\"\"\"\r\n    collector = db.FilteredElementCollector(doc)\r\n    elements = collector.OfCategory(cat)\\\r\n                        .WhereElementIsNotElementType()\\\r\n                        .ToElements()\r\n    return elements\r\n\r\n\r\n# The inputs to this node will be stored as a list in the IN variables.\r\ndataEnteringNode = IN\r\n\r\n# Place your code below this line\r\nduct_insulations = query_all_elements_of_category(\r\n        doc=doc, cat=db.BuiltInCategory.OST_DuctInsulations)\r\n        \r\n# Assign your output to the OUT variable.\r\nOUT = duct_insulations",
+      "VariableInputPorts": true,
+      "Id": "7619429bc80a4dea9e154e3d737c99c4",
+      "Inputs": [
+        {
+          "Id": "8caf067dba3c433c8915b1d6650745fc",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "a2bb0d8abe3b4a9a8715a04a617ca442",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded IronPython script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "61f8fffcbb3e4da2b5ad22fa4bb58a4d",
+      "Inputs": [
+        {
+          "Id": "89826155ac2a4e7fb05f2c67c287e556",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "46bbd55fb6c6450d9b6f5d3761e10371",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import clr\r\n# Import RevitNodes\r\nclr.AddReference(\"RevitNodes\")\r\nimport Revit\r\n\r\n# Import RevitAPI\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference('RevitAPIUI')\r\nimport Autodesk\r\nimport Autodesk.Revit.DB as db\r\n\r\n# Import Revit elements\r\nfrom Revit.Elements import *\r\n\r\n# Import DocumentManager\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\n# important vars, dynamo version\r\n#-------------------------------\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuiapp = DocumentManager.Instance.CurrentUIApplication\r\nuidoc = uiapp.ActiveUIDocument\r\napp = uiapp.Application\r\nview = uidoc.ActiveView \r\n\r\n\r\ndef query_all_elements_of_category(doc, cat):\r\n    \"\"\"Return all elements of a category from a document.\"\"\"\r\n    collector = db.FilteredElementCollector(doc)\r\n    elements = collector.OfCategory(cat)\\\r\n                        .WhereElementIsNotElementType()\\\r\n                        .ToElements()\r\n    return elements\r\n\r\n# Place your code below this line\r\npipe_insulations = query_all_elements_of_category(\r\n        doc=doc, cat=db.BuiltInCategory.OST_PipeInsulations)\r\n\r\n\r\n# Assign your output to the OUT variable.\r\nOUT = pipe_insulations",
+      "VariableInputPorts": true,
+      "Id": "35921d66dcb74709acfe20873b65a3b4",
+      "Inputs": [
+        {
+          "Id": "18da31719b134bdc8d13abb5043719d1",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "48de7e60f06643f18c51af9efece11e4",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded IronPython script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "f01651cae69b4f6e9a2108b56b89d38e",
+      "Inputs": [
+        {
+          "Id": "82a40dfcd0be46f9b7248630a4c66f8a",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "f1b3690b797940fe928f636aa92dfafd",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import collections\r\nimport clr\r\n# Import RevitNodes\r\nclr.AddReference(\"RevitNodes\")\r\nimport Revit\r\n\r\n# Import RevitAPI\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference('RevitAPIUI')\r\nimport Autodesk\r\nimport Autodesk.Revit.DB as db\r\n\r\n# Import Revit elements\r\nfrom Revit.Elements import *\r\n\r\n# Import DocumentManager\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\n# important vars, dynamo version\r\n#-------------------------------\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuiapp = DocumentManager.Instance.CurrentUIApplication\r\nuidoc = uiapp.ActiveUIDocument\r\napp = uiapp.Application\r\nview = uidoc.ActiveView \r\n\r\nElementHostPair = collections.namedtuple(\"ElementHostPair\", [\"element\", \"host\"])\r\n\r\ndef query_all_elements_of_category(doc, cat):\r\n    \"\"\"Return all elements of a category from a document.\"\"\"\r\n    collector = db.FilteredElementCollector(doc)\r\n    elements = collector.OfCategory(cat)\\\r\n                        .WhereElementIsNotElementType()\\\r\n                        .ToElements()\r\n    return elements\r\n\r\ndef find_rogue_and_unhosted_elements(doc, elems):\r\n    \"\"\"Find all rogue and unhosted insulation elements.\"\"\"\r\n    unhosted_elements = []\r\n    rogue_elements = []\r\n    for element in elems:\r\n        host_id = element.HostElementId\r\n        host_element = doc.GetElement(host_id)\r\n        if host_element is None:\r\n            unhosted_elements.append(element)\r\n        else:\r\n            if element.WorksetId != host_element.WorksetId:\r\n                rogue_elements.append(ElementHostPair(element, host_element))\r\n    return rogue_elements, unhosted_elements\r\n\r\ndef cleanup_insulation(pair):\r\n    \"\"\"Cleanup rogue and unhosted insulation elements.\"\"\"\r\n    element_workset_id = pair.element.WorksetId.IntegerValue\r\n    host_workset_id = pair.host.WorksetId.IntegerValue\r\n    host_workset_parameter = pair.host.get_Parameter(\r\n        db.BuiltInParameter.ELEM_PARTITION_PARAM)\r\n    host_workset_parameter.Set(element_workset_id)\r\n    host_workset_parameter.Set(host_workset_id)\r\n\r\n# Place your code below this line\r\nshould_run = IN[0]\r\nsuccess = None\r\n\r\nif should_run:\r\n\t# STEP 1: Inspect Model and summarize findings\r\n\tpipe_insulations = query_all_elements_of_category(doc=doc, cat=db.BuiltInCategory.OST_PipeInsulations)\r\n\tduct_insulations = query_all_elements_of_category(doc=doc, cat=db.BuiltInCategory.OST_DuctInsulations)\r\n\trogue_pipe, unhosted_pipe = find_rogue_and_unhosted_elements(doc=doc, elems=pipe_insulations)\r\n\trogue_duct, unhosted_duct = find_rogue_and_unhosted_elements(doc=doc, elems=duct_insulations)\r\n\t\r\n\t# STEP 2: Clean up insulation\r\n\ttransaction = db.Transaction(doc)\r\n\ttransaction.Start(\"Insulation Cleanup\")\r\n\ttry:\r\n\t    for pipe_element in unhosted_pipe:\r\n\t        doc.Delete(pipe_element.Id)\r\n\t    for pipe_pair in rogue_pipe:\r\n\t        cleanup_insulation(pipe_pair)\r\n\t    for duct_element in unhosted_duct:\r\n\t        doc.Delete(duct_element.Id)\r\n\t    for duct_pair in rogue_duct:\r\n\t        cleanup_insulation(duct_pair)\r\n\texcept Exception as exception:\r\n\t\ttransaction.RollBack()\r\n\t\tsuccess = False\r\n\telse:\r\n\t\ttransaction.Commit()\r\n\t\tsuccess = True\r\n        \r\n# Assign your output to the OUT variable.\r\nOUT = success\r\n#OUT = unhosted_pipe",
+      "VariableInputPorts": true,
+      "Id": "9b845f9cdfa24848811268b7d6af739d",
+      "Inputs": [
+        {
+          "Id": "080aa4259fe548849b6edd7a0c05b976",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "ef0ae3e9d221439cb4f1e78624f9ca72",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded IronPython script."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import collections\r\nimport clr\r\n# Import RevitNodes\r\nclr.AddReference(\"RevitNodes\")\r\nimport Revit\r\n\r\n# Import RevitAPI\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference('RevitAPIUI')\r\nimport Autodesk\r\nimport Autodesk.Revit.DB as db\r\n\r\n# Import Revit elements\r\nfrom Revit.Elements import *\r\n\r\n# Import DocumentManager\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\n# important vars, dynamo version\r\n#-------------------------------\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuiapp = DocumentManager.Instance.CurrentUIApplication\r\nuidoc = uiapp.ActiveUIDocument\r\napp = uiapp.Application\r\nview = uidoc.ActiveView \r\n\r\nElementHostPair = collections.namedtuple(\"ElementHostPair\", [\"element\", \"host\"])\r\n\r\ndef query_all_elements_of_category(doc, cat):\r\n    \"\"\"Return all elements of a category from a document.\"\"\"\r\n    collector = db.FilteredElementCollector(doc)\r\n    elements = collector.OfCategory(cat)\\\r\n                        .WhereElementIsNotElementType()\\\r\n                        .ToElements()\r\n    return elements\r\n\r\n\r\ndef find_rogue_and_unhosted_elements(doc, elems):\r\n    \"\"\"Find all rogue and unhosted insulation elements.\"\"\"\r\n    unhosted_elements = []\r\n    rogue_elements = []\r\n    for element in elems:\r\n        host_id = element.HostElementId\r\n        host_element = doc.GetElement(host_id)\r\n        if host_element is None:\r\n            unhosted_elements.append(element)\r\n        else:\r\n            if element.WorksetId != host_element.WorksetId:\r\n                rogue_elements.append(ElementHostPair(element, host_element))\r\n    return rogue_elements, unhosted_elements\r\n\r\n# Place your code below this line\r\n# STEP 1: Inspect Model and summarize findings\r\npipe_insulations = query_all_elements_of_category(doc=doc, cat=db.BuiltInCategory.OST_PipeInsulations)\r\nrogue_pipe, unhosted_pipe = find_rogue_and_unhosted_elements(doc=doc, elems=pipe_insulations)\r\n    \r\n# Assign your output to the OUT variable.\r\nOUT = [rogue_pipe, unhosted_pipe]",
+      "VariableInputPorts": true,
+      "Id": "ed15638ac1a349bda819019d43724778",
+      "Inputs": [
+        {
+          "Id": "90c687280c254c16adaed5b91e418a8b",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "c6fcf438b7e94317a8eaa9ae654b9ebd",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded IronPython script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "a7c063ab5fc8421a835104419e0e6fbd",
+      "Inputs": [
+        {
+          "Id": "b8fc9ad9fde941d5aa2d7ba97cafe62f",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "0f9346c608ab4421ae7b042c85b68648",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import collections\r\nimport clr\r\n# Import RevitNodes\r\nclr.AddReference(\"RevitNodes\")\r\nimport Revit\r\n\r\n# Import RevitAPI\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference('RevitAPIUI')\r\nimport Autodesk\r\nimport Autodesk.Revit.DB as db\r\n\r\n# Import Revit elements\r\nfrom Revit.Elements import *\r\n\r\n# Import DocumentManager\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\n# important vars, dynamo version\r\n#-------------------------------\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuiapp = DocumentManager.Instance.CurrentUIApplication\r\nuidoc = uiapp.ActiveUIDocument\r\napp = uiapp.Application\r\nview = uidoc.ActiveView \r\n\r\nElementHostPair = collections.namedtuple(\"ElementHostPair\", [\"element\", \"host\"])\r\n\r\ndef query_all_elements_of_category(doc, cat):\r\n    \"\"\"Return all elements of a category from a document.\"\"\"\r\n    collector = db.FilteredElementCollector(doc)\r\n    elements = collector.OfCategory(cat)\\\r\n                        .WhereElementIsNotElementType()\\\r\n                        .ToElements()\r\n    return elements\r\n\r\n\r\ndef find_rogue_and_unhosted_elements(doc, elems):\r\n    \"\"\"Find all rogue and unhosted insulation elements.\"\"\"\r\n    unhosted_elements = []\r\n    rogue_elements = []\r\n    for element in elems:\r\n        host_id = element.HostElementId\r\n        host_element = doc.GetElement(host_id)\r\n        if host_element is None:\r\n            unhosted_elements.append(element)\r\n        else:\r\n            if element.WorksetId != host_element.WorksetId:\r\n                rogue_elements.append(ElementHostPair(element, host_element))\r\n    return rogue_elements, unhosted_elements\r\n\r\n# Place your code below this line\r\n# STEP 1: Inspect Model and summarize findings\r\nduct_insulations = query_all_elements_of_category(doc=doc, cat=db.BuiltInCategory.OST_DuctInsulations)\r\nrogue_duct, unhosted_duct = find_rogue_and_unhosted_elements(doc=doc, elems=duct_insulations)\r\n\r\n# Assign your output to the OUT variable.\r\nOUT = [rogue_duct, unhosted_duct]",
+      "VariableInputPorts": true,
+      "Id": "e8e7bf87ae294fe08c8428e655f6d08c",
+      "Inputs": [
+        {
+          "Id": "e78a1585d3f247c9a0c22a524f07dcce",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "50e2415972da4500818777f172ddff7e",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded IronPython script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "f260b7fe56fe43db89f9d3a8fefbb42f",
+      "Inputs": [
+        {
+          "Id": "156623a5525f4298b1afdfdf82b218d4",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "7dbe65ee07df4c5ebe1fbf37123afb16",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "cd09cceba6aa4738b89b11c4c3a6a06f",
+      "Inputs": [
+        {
+          "Id": "5a9b1c12b2f9456b9b8234e449e11f7e",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "014288c090e8408cbfd788f366a6a984",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DSCore.List.GetItemAtIndex@var[]..[],int",
+      "Id": "77f51d303168484292ce890ebd4400f8",
+      "Inputs": [
+        {
+          "Id": "b9b7f7cae0934b55b48a383867225f1f",
+          "Name": "list",
+          "Description": "List to fetch an item from.\n\nvar[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "e0a4050c9eb642ca81f073567a1aad42",
+          "Name": "index",
+          "Description": "Index of the item to be fetched.\n\nint",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "721eb3c0ce2c4b6693020d8590a4550b",
+          "Name": "item",
+          "Description": "Item in the list at the given index.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Returns an item from the given list that's located at the specified index.\n\nList.GetItemAtIndex (list: var[]..[], index: int): var[]..[]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DSCore.List.GetItemAtIndex@var[]..[],int",
+      "Id": "bc831964524e4212a5e3e27919417c39",
+      "Inputs": [
+        {
+          "Id": "5a477450a1cf4a43bca89d2e0eb2a480",
+          "Name": "list",
+          "Description": "List to fetch an item from.\n\nvar[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "fe3d0ac156924edfbbcdcc11015064db",
+          "Name": "index",
+          "Description": "Index of the item to be fetched.\n\nint",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "6de8c8cc2825476cbbe8c3602b6ed4e2",
+          "Name": "item",
+          "Description": "Item in the list at the given index.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Returns an item from the given list that's located at the specified index.\n\nList.GetItemAtIndex (list: var[]..[], index: int): var[]..[]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "0;\n // rogue elements;\n1;\n // unhosted elements;",
+      "Id": "44f1b3f653f2488badfbac2ef2567d6d",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "2298ce56d8d341c082223376b31786d6",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "521421e1050a41d28d1030c0e08c658b",
+          "Name": "",
+          "Description": "Value of expression at line 3",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "57bc63b5a6414126b740775596633637",
+      "Inputs": [
+        {
+          "Id": "4b2468786a5e48dc80d8ce141ffb872f",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "122b97b10e674544bc90cb3efaae4156",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DSCore.List.Count@var[]..[]",
+      "Id": "18c60a78e9614c359a4ce8f92034c08e",
+      "Inputs": [
+        {
+          "Id": "bf431610c2d54bcc932a93cfd6a775ef",
+          "Name": "list",
+          "Description": "List to get the item count of.\n\nvar[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "1366b15fda84468cbc4de7c2c6519140",
+          "Name": "count",
+          "Description": "List length.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Returns the number of items stored in the given list.\n\nList.Count (list: var[]..[]): int"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DSCore.List.Count@var[]..[]",
+      "Id": "4ac5aff8cbe44b2eb9c9ad887c70995b",
+      "Inputs": [
+        {
+          "Id": "8dc89450b8a443ed9e7aa795f85a6e4b",
+          "Name": "list",
+          "Description": "List to get the item count of.\n\nvar[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "6ab1a8495f514a1091addf8694b8a74a",
+          "Name": "count",
+          "Description": "List length.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Returns the number of items stored in the given list.\n\nList.Count (list: var[]..[]): int"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DSCore.List.GetItemAtIndex@var[]..[],int",
+      "Id": "8627dd9db5c943b681742d0c2cceddae",
+      "Inputs": [
+        {
+          "Id": "3e0fb000e457451797c6d673483aaf66",
+          "Name": "list",
+          "Description": "List to fetch an item from.\n\nvar[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "c5c5d65e1f2c4d6d94f174313418bfa6",
+          "Name": "index",
+          "Description": "Index of the item to be fetched.\n\nint",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "bedbdb8d30764331871fb242b0945ca9",
+          "Name": "item",
+          "Description": "Item in the list at the given index.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Returns an item from the given list that's located at the specified index.\n\nList.GetItemAtIndex (list: var[]..[], index: int): var[]..[]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DSCore.List.GetItemAtIndex@var[]..[],int",
+      "Id": "d889137c7715451daae8d8808b571ba7",
+      "Inputs": [
+        {
+          "Id": "bb42e5a0ad4844e69759f7b063a4bdcd",
+          "Name": "list",
+          "Description": "List to fetch an item from.\n\nvar[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "f5af273f466b48a1a2367fb949c0a7e2",
+          "Name": "index",
+          "Description": "Index of the item to be fetched.\n\nint",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "4011473e03ea46d196ccf3b95f5546de",
+          "Name": "item",
+          "Description": "Item in the list at the given index.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Returns an item from the given list that's located at the specified index.\n\nList.GetItemAtIndex (list: var[]..[], index: int): var[]..[]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "0;\n // rogue elements;\n1;\n // unhosted elements;",
+      "Id": "7a03fa3df89e403793299ab927e475dd",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "27101a8647ba4b419a8b5875746fa7d1",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "e85ebf5f05e44f41abc72ca9ed6c3865",
+          "Name": "",
+          "Description": "Value of expression at line 3",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "36051d7679c345df9776954e53438869",
+      "Inputs": [
+        {
+          "Id": "2f79863982074b1488e00126a4036af5",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "d22f701b552c447ea41a116e3f4496ab",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "27c59ecf660b4192922d08c95a30ef8b",
+      "Inputs": [
+        {
+          "Id": "97b0947d2f534ee99e1c5ebe7563f4e9",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "fccdbcacf8d0489eba935c6aa6b89daf",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DSCore.List.Count@var[]..[]",
+      "Id": "d8fc2b5e3dc74e579eee5b328131d2d4",
+      "Inputs": [
+        {
+          "Id": "463503375179468fb94a4870fa9f4441",
+          "Name": "list",
+          "Description": "List to get the item count of.\n\nvar[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "05b4f3a0421a413891d7e25769e4b909",
+          "Name": "count",
+          "Description": "List length.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Returns the number of items stored in the given list.\n\nList.Count (list: var[]..[]): int"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DSCore.List.Count@var[]..[]",
+      "Id": "6da4124f0c1c4ffdbf31640709ebacbc",
+      "Inputs": [
+        {
+          "Id": "9fdb47a3018f4831832d4a3e6c172d6f",
+          "Name": "list",
+          "Description": "List to get the item count of.\n\nvar[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "8d9ed714744b4766a3041caef53cdc59",
+          "Name": "count",
+          "Description": "List length.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Returns the number of items stored in the given list.\n\nList.Count (list: var[]..[]): int"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.BoolSelector, CoreNodeModels",
+      "NodeType": "BooleanInputNode",
+      "InputValue": true,
+      "Id": "a0cf33f65c8d407caf41a5a0aae70b7b",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "678595c32ec94b458ca909a0b08a3708",
+          "Name": "",
+          "Description": "Boolean",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Selection between a true and false."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "e883b9913e954936823b116faa27689a",
+      "Inputs": [
+        {
+          "Id": "ec570063ea1640ed96b456bee6092fed",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "00e8fe34f7544563b3dbcc58420429c3",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "47138853d4bb4fc281c7ab5567053289",
+      "Inputs": [
+        {
+          "Id": "10dfc2824da249519786a15894b9676d",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "725149955b8c43d886320ca895d11a73",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "16bfe7a93e464f48abccf12d4a1d5a5f",
+      "Inputs": [
+        {
+          "Id": "b2b151d11248478c9751c386c0060b4b",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "8775d0e0831d48d19164256fb5ea5fa7",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "75ee422384c74fcd9d2de736f735d298",
+      "Inputs": [
+        {
+          "Id": "734a46a3a542476194f125a42fde707b",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "8ea4d9e7353149f08d5ea452d030d615",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the output of node."
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "a2bb0d8abe3b4a9a8715a04a617ca442",
+      "End": "82a40dfcd0be46f9b7248630a4c66f8a",
+      "Id": "a121d0a3361b47928357f2d99eec7c40"
+    },
+    {
+      "Start": "48de7e60f06643f18c51af9efece11e4",
+      "End": "89826155ac2a4e7fb05f2c67c287e556",
+      "Id": "cf47024428fc4d94af42e711b9a29bfe"
+    },
+    {
+      "Start": "ef0ae3e9d221439cb4f1e78624f9ca72",
+      "End": "90c687280c254c16adaed5b91e418a8b",
+      "Id": "84c8de6745b643e8aa9b42be18743d6d"
+    },
+    {
+      "Start": "ef0ae3e9d221439cb4f1e78624f9ca72",
+      "End": "e78a1585d3f247c9a0c22a524f07dcce",
+      "Id": "22ca7816301749138ee843f22fe20a36"
+    },
+    {
+      "Start": "c6fcf438b7e94317a8eaa9ae654b9ebd",
+      "End": "156623a5525f4298b1afdfdf82b218d4",
+      "Id": "f4592cb3ec304527a0289e3b3a56de81"
+    },
+    {
+      "Start": "c6fcf438b7e94317a8eaa9ae654b9ebd",
+      "End": "5a477450a1cf4a43bca89d2e0eb2a480",
+      "Id": "c1b6a4e86ba842428b93df696771dfa3"
+    },
+    {
+      "Start": "c6fcf438b7e94317a8eaa9ae654b9ebd",
+      "End": "b9b7f7cae0934b55b48a383867225f1f",
+      "Id": "964fa335af2748ae9bd5f7a386ef64f0"
+    },
+    {
+      "Start": "50e2415972da4500818777f172ddff7e",
+      "End": "b8fc9ad9fde941d5aa2d7ba97cafe62f",
+      "Id": "ec4ca1416f1d43de8ab84b3b7ed85f76"
+    },
+    {
+      "Start": "50e2415972da4500818777f172ddff7e",
+      "End": "3e0fb000e457451797c6d673483aaf66",
+      "Id": "0204eb78f111434fae077a1a9cf2f3cb"
+    },
+    {
+      "Start": "50e2415972da4500818777f172ddff7e",
+      "End": "bb42e5a0ad4844e69759f7b063a4bdcd",
+      "Id": "d962bbd9ad844c10822587500ec7f9f4"
+    },
+    {
+      "Start": "014288c090e8408cbfd788f366a6a984",
+      "End": "bf431610c2d54bcc932a93cfd6a775ef",
+      "Id": "d6e661c715c6428fb10f51783b8d8d47"
+    },
+    {
+      "Start": "721eb3c0ce2c4b6693020d8590a4550b",
+      "End": "5a9b1c12b2f9456b9b8234e449e11f7e",
+      "Id": "dca6dd8e8d394c2cb70d9aacd39684f4"
+    },
+    {
+      "Start": "6de8c8cc2825476cbbe8c3602b6ed4e2",
+      "End": "4b2468786a5e48dc80d8ce141ffb872f",
+      "Id": "ef811fbc30ef4024b50677ba99bd7828"
+    },
+    {
+      "Start": "2298ce56d8d341c082223376b31786d6",
+      "End": "e0a4050c9eb642ca81f073567a1aad42",
+      "Id": "9b830077cf9344fd8473a6dfd4730ec2"
+    },
+    {
+      "Start": "521421e1050a41d28d1030c0e08c658b",
+      "End": "fe3d0ac156924edfbbcdcc11015064db",
+      "Id": "69ef2be331074e408f15845ec676bc58"
+    },
+    {
+      "Start": "122b97b10e674544bc90cb3efaae4156",
+      "End": "8dc89450b8a443ed9e7aa795f85a6e4b",
+      "Id": "f90339da0afe4e2591849a8ef9875da8"
+    },
+    {
+      "Start": "1366b15fda84468cbc4de7c2c6519140",
+      "End": "ec570063ea1640ed96b456bee6092fed",
+      "Id": "48f1bbbabd3b4d09a0ab2df0cc688789"
+    },
+    {
+      "Start": "6ab1a8495f514a1091addf8694b8a74a",
+      "End": "10dfc2824da249519786a15894b9676d",
+      "Id": "ba3ad3dd3a1a4bd8b1bb67d23d6bcfd9"
+    },
+    {
+      "Start": "bedbdb8d30764331871fb242b0945ca9",
+      "End": "2f79863982074b1488e00126a4036af5",
+      "Id": "876061b3e17640d1a6883df671a3a7ef"
+    },
+    {
+      "Start": "4011473e03ea46d196ccf3b95f5546de",
+      "End": "97b0947d2f534ee99e1c5ebe7563f4e9",
+      "Id": "c6945538ebe84721b0cf29dba5dce9d5"
+    },
+    {
+      "Start": "27101a8647ba4b419a8b5875746fa7d1",
+      "End": "c5c5d65e1f2c4d6d94f174313418bfa6",
+      "Id": "a92799f07edc4f859378f65daf047e72"
+    },
+    {
+      "Start": "e85ebf5f05e44f41abc72ca9ed6c3865",
+      "End": "f5af273f466b48a1a2367fb949c0a7e2",
+      "Id": "d2a10001dca84790b29f124ca35d90ec"
+    },
+    {
+      "Start": "d22f701b552c447ea41a116e3f4496ab",
+      "End": "463503375179468fb94a4870fa9f4441",
+      "Id": "f57e2c1159ca403ebaf6838a03e537ad"
+    },
+    {
+      "Start": "fccdbcacf8d0489eba935c6aa6b89daf",
+      "End": "9fdb47a3018f4831832d4a3e6c172d6f",
+      "Id": "8e904b9757f14136bc2194d7ec0107fa"
+    },
+    {
+      "Start": "05b4f3a0421a413891d7e25769e4b909",
+      "End": "b2b151d11248478c9751c386c0060b4b",
+      "Id": "8cc16e493f964aab9869a7541064f800"
+    },
+    {
+      "Start": "8d9ed714744b4766a3041caef53cdc59",
+      "End": "734a46a3a542476194f125a42fde707b",
+      "Id": "a121abf44d2748fb8107a3ffe023441a"
+    },
+    {
+      "Start": "678595c32ec94b458ca909a0b08a3708",
+      "End": "080aa4259fe548849b6edd7a0c05b976",
+      "Id": "068e504e236c4c53b7fd176f2f376ce1"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.6.1.8786",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "NodeViews": [
+      {
+        "ShowGeometry": true,
+        "Name": "Find All Duct Insulation",
+        "Id": "7619429bc80a4dea9e154e3d737c99c4",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": true,
+        "X": 316.59672263762764,
+        "Y": 805.54742763733134
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Watch",
+        "Id": "61f8fffcbb3e4da2b5ad22fa4bb58a4d",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 580.67504359023656,
+        "Y": 119.6564480239573
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Find All Pipe Insulation",
+        "Id": "35921d66dcb74709acfe20873b65a3b4",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": true,
+        "X": 336.87242404092387,
+        "Y": 122.5148282921113
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Watch",
+        "Id": "f01651cae69b4f6e9a2108b56b89d38e",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 587.45052898662971,
+        "Y": 805.2694007696266
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Full Insulation Cleanup",
+        "Id": "9b845f9cdfa24848811268b7d6af739d",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 488.261404345531,
+        "Y": -347.87218651819569
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Find All Rogue Pipe Insulation",
+        "Id": "ed15638ac1a349bda819019d43724778",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1008.6148537319705,
+        "Y": 135.72576643616208
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Watch",
+        "Id": "a7c063ab5fc8421a835104419e0e6fbd",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1395.6941534863388,
+        "Y": 1106.134734228154
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Find All Rogue Duct Insulation",
+        "Id": "e8e7bf87ae294fe08c8428e655f6d08c",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1023.1028421067956,
+        "Y": 789.87852032053979
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Watch",
+        "Id": "f260b7fe56fe43db89f9d3a8fefbb42f",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1330.8162716507509,
+        "Y": 245.03924131780366
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Watch",
+        "Id": "cd09cceba6aa4738b89b11c4c3a6a06f",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2014.7351733365633,
+        "Y": -114.4246819294608
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "List.GetItemAtIndex",
+        "Id": "77f51d303168484292ce890ebd4400f8",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1524.5188370083904,
+        "Y": -101.90384486436869
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "List.GetItemAtIndex",
+        "Id": "bc831964524e4212a5e3e27919417c39",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1532.9985337472792,
+        "Y": 93.2329856693475
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Code Block",
+        "Id": "44f1b3f653f2488badfbac2ef2567d6d",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1163.208911718049,
+        "Y": -105.827358000618
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Watch",
+        "Id": "57bc63b5a6414126b740775596633637",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1795.3968852498217,
+        "Y": 106.14299096856473
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Number of rogue Pipe Insulations",
+        "Id": "18c60a78e9614c359a4ce8f92034c08e",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2487.3946385230593,
+        "Y": -20.309322101381554
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Number of unhosted Pipe Insulations",
+        "Id": "4ac5aff8cbe44b2eb9c9ad887c70995b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2496.8065096550372,
+        "Y": 160.15444055293267
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "List.GetItemAtIndex",
+        "Id": "8627dd9db5c943b681742d0c2cceddae",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1630.1269525813061,
+        "Y": 787.75512858635011
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "List.GetItemAtIndex",
+        "Id": "d889137c7715451daae8d8808b571ba7",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1632.4163931479291,
+        "Y": 925.11623484566417
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Code Block",
+        "Id": "7a03fa3df89e403793299ab927e475dd",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1017.0799429524909,
+        "Y": 938.58801975653432
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Watch",
+        "Id": "36051d7679c345df9776954e53438869",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2215.8608484728775,
+        "Y": 736.32902954203632
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Watch",
+        "Id": "27c59ecf660b4192922d08c95a30ef8b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1947.1438626985926,
+        "Y": 967.18502475574769
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Number of rogue Duct Insulations",
+        "Id": "d8fc2b5e3dc74e579eee5b328131d2d4",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2578.0761750719921,
+        "Y": 768.66227037498209
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Number of unhosted Duct Insulations",
+        "Id": "6da4124f0c1c4ffdbf31640709ebacbc",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2585.1055998188767,
+        "Y": 1007.2020970297577
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Run Cleanup",
+        "Id": "a0cf33f65c8d407caf41a5a0aae70b7b",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 177.47304855685965,
+        "Y": -357.7810687654507
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Number of rogue Pipe Insulations",
+        "Id": "e883b9913e954936823b116faa27689a",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": true,
+        "Excluded": false,
+        "X": 2950.0174411147,
+        "Y": -16.639734781584934
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Number of unhosted Pipe Insulations",
+        "Id": "47138853d4bb4fc281c7ab5567053289",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": true,
+        "Excluded": false,
+        "X": 2955.5586248530612,
+        "Y": 152.97806800434984
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Number of rogue Duct Insulations",
+        "Id": "16bfe7a93e464f48abccf12d4a1d5a5f",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": true,
+        "Excluded": false,
+        "X": 2985.9991373866169,
+        "Y": 745.90477423415507
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Number of unhosted Duct Insulations",
+        "Id": "75ee422384c74fcd9d2de736f735d298",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": true,
+        "Excluded": false,
+        "X": 2963.3617515935548,
+        "Y": 997.3023007452033
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "9f8a6c40f9884801af08b9d714e685d9",
+        "Title": "Actual Cleanup Implementation",
+        "Nodes": [
+          "9b845f9cdfa24848811268b7d6af739d"
+        ],
+        "Left": 478.261404345531,
+        "Top": -443.87218651819569,
+        "Width": 262.40666666666669,
+        "Height": 189.0,
+        "FontSize": 36.0,
+        "InitialTop": -347.87218651819569,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 86.0,
+        "Background": "#FF48B9FF"
+      },
+      {
+        "Id": "fbf26eeb85e248fd89376637d03b4e4a",
+        "Title": "Input",
+        "Nodes": [
+          "a0cf33f65c8d407caf41a5a0aae70b7b"
+        ],
+        "Left": 167.47304855685965,
+        "Top": -410.7810687654507,
+        "Width": 157.0,
+        "Height": 121.0,
+        "FontSize": 36.0,
+        "InitialTop": -357.7810687654507,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 43.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "a320ee8bc87b42179664ff342775ed0a",
+        "Title": "Reporting",
+        "Nodes": [
+          "7619429bc80a4dea9e154e3d737c99c4",
+          "61f8fffcbb3e4da2b5ad22fa4bb58a4d",
+          "35921d66dcb74709acfe20873b65a3b4",
+          "f01651cae69b4f6e9a2108b56b89d38e",
+          "ed15638ac1a349bda819019d43724778",
+          "a7c063ab5fc8421a835104419e0e6fbd",
+          "e8e7bf87ae294fe08c8428e655f6d08c",
+          "f260b7fe56fe43db89f9d3a8fefbb42f",
+          "cd09cceba6aa4738b89b11c4c3a6a06f",
+          "77f51d303168484292ce890ebd4400f8",
+          "bc831964524e4212a5e3e27919417c39",
+          "44f1b3f653f2488badfbac2ef2567d6d",
+          "57bc63b5a6414126b740775596633637",
+          "8627dd9db5c943b681742d0c2cceddae",
+          "d889137c7715451daae8d8808b571ba7",
+          "7a03fa3df89e403793299ab927e475dd",
+          "36051d7679c345df9776954e53438869",
+          "27c59ecf660b4192922d08c95a30ef8b"
+        ],
+        "Left": 306.59672263762764,
+        "Top": -167.4246819294608,
+        "Width": 2027.2641258352498,
+        "Height": 1419.5594161576148,
+        "FontSize": 36.0,
+        "InitialTop": -114.4246819294608,
+        "InitialHeight": 1365.5594161576148,
+        "TextblockHeight": 43.0,
+        "Background": "#FFD8D8D8"
+      },
+      {
+        "Id": "d3a5f8d9490a4df997ead40553175aa6",
+        "Title": "Outputs",
+        "Nodes": [
+          "18c60a78e9614c359a4ce8f92034c08e",
+          "4ac5aff8cbe44b2eb9c9ad887c70995b",
+          "d8fc2b5e3dc74e579eee5b328131d2d4",
+          "6da4124f0c1c4ffdbf31640709ebacbc",
+          "e883b9913e954936823b116faa27689a",
+          "47138853d4bb4fc281c7ab5567053289",
+          "16bfe7a93e464f48abccf12d4a1d5a5f",
+          "75ee422384c74fcd9d2de736f735d298"
+        ],
+        "Left": 2477.3946385230593,
+        "Top": -73.309322101381554,
+        "Width": 788.60449886355764,
+        "Height": 1173.5114191311393,
+        "FontSize": 36.0,
+        "InitialTop": -20.309322101381554,
+        "InitialHeight": 1150.5114191311393,
+        "TextblockHeight": 43.0,
+        "Background": "#FFFF7BAC"
+      }
+    ],
+    "X": -0.30312477750447897,
+    "Y": 390.16719550519315,
+    "Zoom": 0.2872502553388952
+  }
+}
