@@ -1,0 +1,872 @@
+{
+  "Uuid": "b74cc622-4a20-4764-ad4a-db5a39014fc3",
+  "IsCustomNode": false,
+  "Description": null,
+  "Name": "PipeRiserTagging",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "\"Port the Python Pipe Riser Tagging Workflow to Dynamo\";\n\"by wrapping the Python code in Python Nodes.\";",
+      "Id": "e056af7a340a40d789745c9fe4c05c4a",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "8303ff068a464879aec53364262b6059",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "a3f341d94085448ea1416d239e72d728",
+          "Name": "",
+          "Description": "Value of expression at line 2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.BoolSelector, CoreNodeModels",
+      "NodeType": "BooleanInputNode",
+      "InputValue": true,
+      "Id": "7b8fff18e6cd41639481ae9c4c7464cf",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "6da71da948094cbba5394d374771d43b",
+          "Name": "",
+          "Description": "Boolean",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Selection between a true and false."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.BoolSelector, CoreNodeModels",
+      "NodeType": "BooleanInputNode",
+      "InputValue": false,
+      "Id": "ef8d14d9997a4a8bae2fa6b6a9b4424d",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "45c59a73faea453a878ab5097a51f236",
+          "Name": "",
+          "Description": "Boolean",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Selection between a true and false."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.BoolSelector, CoreNodeModels",
+      "NodeType": "BooleanInputNode",
+      "InputValue": false,
+      "Id": "2513a39c9c7b4f2e8641eb645cb02f3c",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "2a0624ac3bfc48d6bccf372d43a95d04",
+          "Name": "",
+          "Description": "Boolean",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Selection between a true and false."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.BoolSelector, CoreNodeModels",
+      "NodeType": "BooleanInputNode",
+      "InputValue": false,
+      "Id": "9a5447c845454c37aaff6bb4befaed5c",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "420ede300b324821b4518feb843edeb3",
+          "Name": "",
+          "Description": "Boolean",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Selection between a true and false."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import collections\r\nimport clr\r\n# Import RevitNodes\r\nclr.AddReference(\"RevitNodes\")\r\nimport Revit\r\n\r\n# Import RevitAPI\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference('RevitAPIUI')\r\nimport Autodesk\r\nimport Autodesk.Revit.DB as db\r\n\r\n# Import Revit elements\r\nfrom Revit.Elements import *\r\n\r\n# Import DocumentManager\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\n# important vars, dynamo version\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuiapp = DocumentManager.Instance.CurrentUIApplication\r\nuidoc = uiapp.ActiveUIDocument\r\napp = uiapp.Application\r\nview = uidoc.ActiveView \r\n\r\n# The inputs to this node will be stored as a list in the IN variables.\r\nshould_run = IN[0]\r\nTAG_FAMILY_NAME = IN[1]\r\n\r\ndef clear_pipe_riser_tags_in_view():\r\n    \"\"\"Clear all pipe riser tags in the current view.\"\"\"\r\n    # STEP 1: Get all pipe tags in the view\r\n    tags = db.FilteredElementCollector(doc, view.Id)\\\r\n             .OfCategory(db.BuiltInCategory.OST_PipeTags)\\\r\n             .WhereElementIsNotElementType()\\\r\n             .ToElements()\r\n\r\n    # STEP 2: Filter for BHE_DE pipe riser tags\r\n    riser_tags = []\r\n    for tag in tags:\r\n        tag_type = doc.GetElement(tag.GetTypeId())\r\n        tag_family_name = tag_type.get_Parameter(db.BuiltInParameter.SYMBOL_FAMILY_NAME_PARAM).AsString()\r\n        if tag_family_name == TAG_FAMILY_NAME:\r\n            riser_tags.append(tag)\r\n\r\n    # STEP 3: Delete all BHE_DE pipe riser tags\r\n    if len(riser_tags) == 0:\r\n        return True\r\n    transaction = db.Transaction(doc)\r\n    transaction.Start(\"Riser Tagging - Clear\")\r\n    try:\r\n        for riser_tag in riser_tags:\r\n            doc.Delete(riser_tag.Id)\r\n    except Exception as ex:\r\n        transaction.RollBack()\r\n        return False\r\n    else:\r\n        transaction.Commit()\r\n        return True\r\n\r\nsuccess = None\r\nif should_run:\r\n\t# Place your code below this line\r\n\tsuccess = clear_pipe_riser_tags_in_view()\r\n\t\r\n# Assign your output to the OUT variable.\r\nOUT = success",
+      "VariableInputPorts": true,
+      "Id": "62d7a8f45e9a437984813049709bb35c",
+      "Inputs": [
+        {
+          "Id": "ee891f3871364fccbda25e1ab4122847",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "e9ff7d45847f42b690c90f25d020db3d",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "cc6d60398a444ca08523322fdd03f137",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded IronPython script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "4e9880196b7342fdb3c859474f9b0363",
+      "Inputs": [
+        {
+          "Id": "8d5848f99e834271aed1fd3307880dd8",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "bb5bdabe331745c3a817fb41083bce9b",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import collections\r\nimport clr\r\n# Import RevitNodes\r\nclr.AddReference(\"RevitNodes\")\r\nimport Revit\r\n\r\n# Import RevitAPI\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference('RevitAPIUI')\r\nimport Autodesk\r\nimport Autodesk.Revit.DB as db\r\n\r\n# Import Revit elements\r\nfrom Revit.Elements import *\r\n\r\n# Import DocumentManager\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\n# important vars, dynamo version\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuiapp = DocumentManager.Instance.CurrentUIApplication\r\nuidoc = uiapp.ActiveUIDocument\r\napp = uiapp.Application\r\nview = uidoc.ActiveView \r\n\r\n# The inputs to this node will be stored as a list in the IN variables.\r\nshould_run = IN[0]\r\nsuccess = None\r\n\r\nif should_run:\r\n\t# Place your code below this line\r\n\tsuccess = True\r\n\t\r\n# Assign your output to the OUT variable.\r\nOUT = success",
+      "VariableInputPorts": true,
+      "Id": "bad3fae6453d4673b77a5c5df74be342",
+      "Inputs": [
+        {
+          "Id": "7821405a085445c5a42eb3336d7e511b",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "7d63b8149552485a96bdf4d5ffe2e07a",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded IronPython script."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "\"BHE_DE_PipeTag_FlowArrow\";",
+      "Id": "f8afca62cc2849a083041d5483f13e25",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "83d2eaff762d4a808bcecf0a84932d2a",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Logic.And, CoreNodeModels",
+      "VariableInputPorts": true,
+      "NodeType": "ExtensionNode",
+      "Id": "b34bad49588642568df6480be337cadb",
+      "Inputs": [
+        {
+          "Id": "f49cdc50cca94d1ab34b0ba8edcc88ac",
+          "Name": "bool0",
+          "Description": "operand",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "cf04b1d06aa145f2871095f21bf16736",
+          "Name": "bool1",
+          "Description": "operand",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "c8c04055d2db466ea1034c7b2868971c",
+          "Name": "",
+          "Description": "result",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Boolean AND: Returns true only if both of the inputs are true. If either is false, returns false."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import collections\r\nimport clr\r\n# Import RevitNodes\r\nclr.AddReference(\"RevitNodes\")\r\nimport Revit\r\n\r\n# Import RevitAPI\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference('RevitAPIUI')\r\nimport Autodesk\r\nimport Autodesk.Revit.DB as db\r\n\r\n# Import Revit elements\r\nfrom Revit.Elements import *\r\n\r\n# Import DocumentManager\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\n# important vars, dynamo version\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuiapp = DocumentManager.Instance.CurrentUIApplication\r\nuidoc = uiapp.ActiveUIDocument\r\napp = uiapp.Application\r\nview = uidoc.ActiveView \r\n\r\n# The inputs to this node will be stored as a list in the IN variables.\r\nshould_run = IN[0]\r\nsuccess = None\r\n\r\nif should_run:\r\n\t# Place your code below this line\r\n\tsuccess = True\r\n\t\r\n# Assign your output to the OUT variable.\r\nOUT = success",
+      "VariableInputPorts": true,
+      "Id": "f28f38c90374475b94d6061814217ea5",
+      "Inputs": [
+        {
+          "Id": "88dab59c54ff4b3ca671e415fb77a757",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "292bfdf3732e4ad0a73a9ec0c38ed65e",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded IronPython script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "d4dd8c52e170431f9503e1a481ad5313",
+      "Inputs": [
+        {
+          "Id": "8d3b5fb619b94d77a8067408f82cbecd",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "e9ebfcfb3f004733aeecb6dbfca937df",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Logic.And, CoreNodeModels",
+      "VariableInputPorts": true,
+      "NodeType": "ExtensionNode",
+      "Id": "f793b30bab6147d1817d155f3066fe41",
+      "Inputs": [
+        {
+          "Id": "f761deadf2644e43a43cf0e2bb887a73",
+          "Name": "bool0",
+          "Description": "operand",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "f53ea09da14f4b979748b39ecb587f22",
+          "Name": "bool1",
+          "Description": "operand",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "12c4824d0e4e4dd0bb185705b4d7af4e",
+          "Name": "",
+          "Description": "result",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Boolean AND: Returns true only if both of the inputs are true. If either is false, returns false."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import collections\r\nimport clr\r\n# Import RevitNodes\r\nclr.AddReference(\"RevitNodes\")\r\nimport Revit\r\n\r\n# Import RevitAPI\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference('RevitAPIUI')\r\nimport Autodesk\r\nimport Autodesk.Revit.DB as db\r\n\r\n# Import Revit elements\r\nfrom Revit.Elements import *\r\n\r\n# Import DocumentManager\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\n# important vars, dynamo version\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuiapp = DocumentManager.Instance.CurrentUIApplication\r\nuidoc = uiapp.ActiveUIDocument\r\napp = uiapp.Application\r\nview = uidoc.ActiveView \r\n\r\n# The inputs to this node will be stored as a list in the IN variables.\r\nshould_run = IN[0]\r\nsuccess = None\r\n\r\nif should_run:\r\n\t# Place your code below this line\r\n\tsuccess = True\r\n\t\r\n# Assign your output to the OUT variable.\r\nOUT = success",
+      "VariableInputPorts": true,
+      "Id": "f89ff0d3d12f40f884d8d76c45bedaf1",
+      "Inputs": [
+        {
+          "Id": "249b564a45cc4c3e828ef4e3f333576f",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "f8609be5b8454dd2ad9b6cb794a800f6",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded IronPython script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Logic.And, CoreNodeModels",
+      "VariableInputPorts": true,
+      "NodeType": "ExtensionNode",
+      "Id": "85723005767147c7adc5e19b559e6048",
+      "Inputs": [
+        {
+          "Id": "646aae9ce85840dfaef347e4a0491b86",
+          "Name": "bool0",
+          "Description": "operand",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "93a0f9f601ea4d8aa1acbd6f19b9551d",
+          "Name": "bool1",
+          "Description": "operand",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "5bed11a462a64b6995d7f094628684bb",
+          "Name": "",
+          "Description": "result",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Boolean AND: Returns true only if both of the inputs are true. If either is false, returns false."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "71fb5005c6b44627a60361b3def29b6d",
+      "Inputs": [
+        {
+          "Id": "0bcb73506db8469a9aba2c27584a95b9",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "79ad2df5fc7f4f898a100f0927224830",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the output of node."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import collections\r\nimport clr\r\n# Import RevitNodes\r\nclr.AddReference(\"RevitNodes\")\r\nimport Revit\r\n\r\n# Import RevitAPI\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference('RevitAPIUI')\r\nimport Autodesk\r\nimport Autodesk.Revit.DB as db\r\n\r\n# Import Revit elements\r\nfrom Revit.Elements import *\r\n\r\n# Import DocumentManager\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\n# important vars, dynamo version\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuiapp = DocumentManager.Instance.CurrentUIApplication\r\nuidoc = uiapp.ActiveUIDocument\r\napp = uiapp.Application\r\nview = uidoc.ActiveView \r\n\r\n# The inputs to this node will be stored as a list in the IN variables.\r\nshould_run = IN[0]\r\nsuccess = None\r\n\r\nif should_run:\r\n\t# Place your code below this line\r\n\tsuccess = True\r\n\t\r\n# Assign your output to the OUT variable.\r\nOUT = success",
+      "VariableInputPorts": true,
+      "Id": "23420d7a252a4277aaa0761d8210acd0",
+      "Inputs": [
+        {
+          "Id": "1487ffed3bac45e0bd43107d69284a62",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "e11af4a2e63d4d05b1672f404a989f87",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded IronPython script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "1adb7e3f1648472eabd002ff5b4014e7",
+      "Inputs": [
+        {
+          "Id": "f5e2255e94504dde91bb68b6b692109e",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "9f3a8a582f664992aa685f72f353e24f",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualize the output of node."
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "6da71da948094cbba5394d374771d43b",
+      "End": "ee891f3871364fccbda25e1ab4122847",
+      "Id": "b728d74dcca948fc9f113b4a9eb07987"
+    },
+    {
+      "Start": "45c59a73faea453a878ab5097a51f236",
+      "End": "cf04b1d06aa145f2871095f21bf16736",
+      "Id": "9e0ce40b718c4779ba090ad1495dc7ab"
+    },
+    {
+      "Start": "2a0624ac3bfc48d6bccf372d43a95d04",
+      "End": "f53ea09da14f4b979748b39ecb587f22",
+      "Id": "b09827f76d3b40d898fd53db5385b1a2"
+    },
+    {
+      "Start": "420ede300b324821b4518feb843edeb3",
+      "End": "93a0f9f601ea4d8aa1acbd6f19b9551d",
+      "Id": "5eaed5ed8044418e866e18599ec66701"
+    },
+    {
+      "Start": "cc6d60398a444ca08523322fdd03f137",
+      "End": "8d5848f99e834271aed1fd3307880dd8",
+      "Id": "e688e2cb81f04fa48d996e09ca24450d"
+    },
+    {
+      "Start": "cc6d60398a444ca08523322fdd03f137",
+      "End": "f49cdc50cca94d1ab34b0ba8edcc88ac",
+      "Id": "595f51913d664917a08dc5ba275d99f1"
+    },
+    {
+      "Start": "83d2eaff762d4a808bcecf0a84932d2a",
+      "End": "e9ff7d45847f42b690c90f25d020db3d",
+      "Id": "004714c4b23a4e33bde342a1d9cf136e"
+    },
+    {
+      "Start": "c8c04055d2db466ea1034c7b2868971c",
+      "End": "88dab59c54ff4b3ca671e415fb77a757",
+      "Id": "fce172e2bc444cb3b85f4bbdaa17fd01"
+    },
+    {
+      "Start": "292bfdf3732e4ad0a73a9ec0c38ed65e",
+      "End": "8d3b5fb619b94d77a8067408f82cbecd",
+      "Id": "fe7cc982623449c283fb9fe76c8b2006"
+    },
+    {
+      "Start": "292bfdf3732e4ad0a73a9ec0c38ed65e",
+      "End": "f761deadf2644e43a43cf0e2bb887a73",
+      "Id": "6f49abae7ca94946a724ee71b1f940de"
+    },
+    {
+      "Start": "12c4824d0e4e4dd0bb185705b4d7af4e",
+      "End": "249b564a45cc4c3e828ef4e3f333576f",
+      "Id": "7cd2667350b6424c9a675ead2e108a55"
+    },
+    {
+      "Start": "f8609be5b8454dd2ad9b6cb794a800f6",
+      "End": "646aae9ce85840dfaef347e4a0491b86",
+      "Id": "d1387a6265be47c58cd225fd56793cb7"
+    },
+    {
+      "Start": "f8609be5b8454dd2ad9b6cb794a800f6",
+      "End": "0bcb73506db8469a9aba2c27584a95b9",
+      "Id": "88100cea378e4e98ae19234592b74185"
+    },
+    {
+      "Start": "5bed11a462a64b6995d7f094628684bb",
+      "End": "1487ffed3bac45e0bd43107d69284a62",
+      "Id": "9a0ca01ccc244bc298a025e9498c956c"
+    },
+    {
+      "Start": "e11af4a2e63d4d05b1672f404a989f87",
+      "End": "f5e2255e94504dde91bb68b6b692109e",
+      "Id": "c0e45bedfd294aecbe8f77bcc7c6d172"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.6.2.15705",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "NodeViews": [
+      {
+        "ShowGeometry": true,
+        "Name": "Code Block",
+        "Id": "e056af7a340a40d789745c9fe4c05c4a",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -290.37123088594336,
+        "Y": -288.32934650947345
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Clear Pipe Riser Tags",
+        "Id": "7b8fff18e6cd41639481ae9c4c7464cf",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -89.553383067132472,
+        "Y": -27.537199940351741
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Tag Risers",
+        "Id": "ef8d14d9997a4a8bae2fa6b6a9b4424d",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -91.657836896838376,
+        "Y": 91.129266843161759
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Correct Vent Tags",
+        "Id": "2513a39c9c7b4f2e8641eb645cb02f3c",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -85.476737512441673,
+        "Y": 210.12051896556352
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Color Riser Tags",
+        "Id": "9a5447c845454c37aaff6bb4befaed5c",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -88.685636477374032,
+        "Y": 307.66397568645453
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Clear Pipe Riser Tags Python Implementation",
+        "Id": "62d7a8f45e9a437984813049709bb35c",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 289.16225479826653,
+        "Y": -56.950413026005833
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Watch",
+        "Id": "4e9880196b7342fdb3c859474f9b0363",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2081.0895329422069,
+        "Y": -46.1607939076174
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "SCRIPT TEMPLATE",
+        "Id": "bad3fae6453d4673b77a5c5df74be342",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 301.25325510024072,
+        "Y": -275.03021663261961
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Riser Tag Family Name",
+        "Id": "f8afca62cc2849a083041d5483f13e25",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -103.92100381300162,
+        "Y": 500.89840353612811
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "And",
+        "Id": "b34bad49588642568df6480be337cadb",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 696.48573334513185,
+        "Y": 47.918718870126668
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "SCRIPT TEMPLATE",
+        "Id": "f28f38c90374475b94d6061814217ea5",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 863.23491618427011,
+        "Y": 53.107385021925552
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Watch",
+        "Id": "d4dd8c52e170431f9503e1a481ad5313",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2087.6649888126262,
+        "Y": 68.71804621947615
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "And",
+        "Id": "f793b30bab6147d1817d155f3066fe41",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1130.7411942497179,
+        "Y": 157.56938847355235
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "SCRIPT TEMPLATE",
+        "Id": "f89ff0d3d12f40f884d8d76c45bedaf1",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1336.4525916870678,
+        "Y": 169.01943802244966
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "And",
+        "Id": "85723005767147c7adc5e19b559e6048",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1586.345348150267,
+        "Y": 273.25741523076317
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Watch",
+        "Id": "71fb5005c6b44627a60361b3def29b6d",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2087.85815464233,
+        "Y": 173.23899815706352
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "SCRIPT TEMPLATE",
+        "Id": "23420d7a252a4277aaa0761d8210acd0",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1780.2975187531824,
+        "Y": 286.38367201342305
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Watch",
+        "Id": "1adb7e3f1648472eabd002ff5b4014e7",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2086.7598410814139,
+        "Y": 280.73649549841213
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "b6a8633025fa4ab19444c9cc0099f8f6",
+        "Title": "Inputs",
+        "Nodes": [
+          "7b8fff18e6cd41639481ae9c4c7464cf",
+          "ef8d14d9997a4a8bae2fa6b6a9b4424d",
+          "2513a39c9c7b4f2e8641eb645cb02f3c",
+          "9a5447c845454c37aaff6bb4befaed5c",
+          "f8afca62cc2849a083041d5483f13e25"
+        ],
+        "Left": -113.92100381300162,
+        "Top": -80.537199940351741,
+        "Width": 294.0,
+        "Height": 674.43560347647986,
+        "FontSize": 36.0,
+        "InitialTop": -27.537199940351741,
+        "InitialHeight": 673.43560347647986,
+        "TextblockHeight": 43.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "084794e753484188931df83f0af72267",
+        "Title": "WORK IN PROGRESS...",
+        "Nodes": [
+          "4e9880196b7342fdb3c859474f9b0363",
+          "f28f38c90374475b94d6061814217ea5",
+          "d4dd8c52e170431f9503e1a481ad5313",
+          "f793b30bab6147d1817d155f3066fe41",
+          "f89ff0d3d12f40f884d8d76c45bedaf1",
+          "85723005767147c7adc5e19b559e6048",
+          "71fb5005c6b44627a60361b3def29b6d",
+          "23420d7a252a4277aaa0761d8210acd0",
+          "1adb7e3f1648472eabd002ff5b4014e7"
+        ],
+        "Left": 853.23491618427011,
+        "Top": -99.1607939076174,
+        "Width": 1322.62323845806,
+        "Height": 478.54446592104046,
+        "FontSize": 36.0,
+        "InitialTop": -46.1607939076174,
+        "InitialHeight": 455.54446592104046,
+        "TextblockHeight": 43.0,
+        "Background": "#FFFF7BAC"
+      }
+    ],
+    "X": 178.7622475508731,
+    "Y": 397.36099755596774,
+    "Zoom": 0.29561228189492328
+  }
+}
